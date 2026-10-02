@@ -1,0 +1,68 @@
+<section class="extraction-card" aria-labelledby="extraction-title">
+  <p class="eyebrow">TaskPilot · mídia</p>
+  <h1 id="extraction-title">Extrair áudio do YouTube</h1>
+  <p class="intro">
+    Escolha um trecho de até 30 minutos. A solicitação é processada em segundo plano.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <label for="video-url">Link do vídeo</label>
+    <input
+      id="video-url"
+      type="url"
+      formControlName="url"
+      placeholder="https://www.youtube.com/watch?v=..."
+      autocomplete="url"
+      [attr.aria-invalid]="form.controls.url.invalid && form.controls.url.touched"
+      aria-describedby="url-help url-error"
+    />
+    <small id="url-help">Aceitamos links youtube.com, youtu.be e youtube-nocookie.com.</small>
+    @if (form.controls.url.touched && form.controls.url.hasError('required')) {
+      <p class="field-error" id="url-error">Informe o link do vídeo.</p>
+    } @else if (form.controls.url.touched && form.controls.url.hasError('youtubeUrl')) {
+      <p class="field-error" id="url-error">Informe um link válido de vídeo do YouTube.</p>
+    }
+
+    <div class="time-fields">
+      <div>
+        <label for="start-time">Início (HH:MM:SS)</label>
+        <input id="start-time" formControlName="start" inputmode="numeric" />
+        @if (form.controls.start.touched && form.controls.start.hasError('required')) {
+          <p class="field-error">Informe o horário inicial.</p>
+        } @else if (form.controls.start.touched && form.controls.start.invalid) {
+          <p class="field-error">Use o formato HH:MM:SS.</p>
+        }
+      </div>
+      <div>
+        <label for="end-time">Fim (HH:MM:SS)</label>
+        <input id="end-time" formControlName="end" inputmode="numeric" />
+        @if (form.controls.end.touched && form.controls.end.hasError('required')) {
+          <p class="field-error">Informe o horário final.</p>
+        } @else if (form.controls.end.touched && form.controls.end.invalid) {
+          <p class="field-error">Use o formato HH:MM:SS.</p>
+        }
+      </div>
+    </div>
+    @if (form.touched && form.hasError('intervalOrder')) {
+      <p class="field-error" role="alert">O fim deve ser posterior ao início.</p>
+    }
+    @if (form.touched && form.hasError('intervalTooLong')) {
+      <p class="field-error" role="alert">O trecho não pode exceder 30 minutos.</p>
+    }
+
+    @if (errorMessage()) {
+      <p class="notice notice-error" role="alert">{{ errorMessage() }}</p>
+    }
+    @if (accepted(); as request) {
+      <div class="notice notice-success" role="status">
+        <strong>Solicitação recebida.</strong>
+        <span>{{ request.message }}</span>
+        <span class="request-id">Identificador: {{ request.requestId }}</span>
+      </div>
+    }
+
+    <button type="submit" [disabled]="submitting()">
+      {{ submitting() ? 'Enviando…' : 'Solicitar extração' }}
+    </button>
+  </form>
+</section>
