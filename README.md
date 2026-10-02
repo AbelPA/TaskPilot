@@ -42,10 +42,12 @@ available at <http://localhost:4200>; RabbitMQ management is at
 <http://localhost:15672>; the local Grafana/OTel LGTM dashboard is at
 <http://localhost:3000>. SeaweedFS provides the local S3 API at
 <http://localhost:8333> and the filer console at <http://localhost:8888>.
-Use `docker compose logs --follow` to view service output and
-`docker compose down` to stop the services. The API and worker export traces to
-OTLP over HTTP so the same W3C `traceparent` can be followed from the browser,
-through RabbitMQ, and into the worker.
+The startup script stays open and prints log lines matching common error indicators;
+press `Ctrl+C` to stop monitoring without stopping the containers. To view all
+service output, use `docker compose logs --follow`; stop the services with
+`docker compose down`. The API and worker export traces to OTLP over HTTP so the
+same W3C `traceparent` can be followed from the browser, through RabbitMQ, and
+into the worker.
 
 On macOS, enter the key without echoing it or saving it in shell history:
 

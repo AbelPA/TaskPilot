@@ -72,5 +72,6 @@ printf '  Web:             http://localhost:4200\n'
 printf '  RabbitMQ:        http://localhost:15672\n'
 printf '  API S3:          http://localhost:8333\n'
 printf '  Console filer:   http://localhost:8888\n'
-printf '\nPara acompanhar os logs: docker compose logs --follow\n'
-printf 'Para parar os serviços: docker compose down\n'
+printf '\nMonitorando logs em busca de erros (Ctrl+C encerra o monitoramento; os serviços continuam ativos)...\n'
+docker compose logs --follow --tail=100 2>&1 |
+  awk 'tolower($0) ~ /error|fatal|exception|traceback|failed|unhealthy/ { print; fflush() }'
