@@ -1,0 +1,51 @@
+<section class="notification-center" aria-label="Notificações de extração">
+  <button
+    class="notification-toggle"
+    type="button"
+    aria-label="Abrir notificações de extração"
+    [attr.aria-expanded]="expanded()"
+    (click)="toggle()"
+  >
+    Notificações
+    @if (notifications.unreadCount() > 0) {
+      <span class="notification-count">{{ notifications.unreadCount() }}</span>
+    }
+  </button>
+
+  @if (expanded()) {
+    <div class="notification-panel" role="region" aria-label="Central de notificações">
+      <h2>Notificações</h2>
+      @if (notifications.recoveryError()) {
+        <p class="notification-error" role="status">{{ notifications.recoveryError() }}</p>
+      }
+      @if (notifications.outcomes().length === 0) {
+        <p>Você ainda não tem resultados de extração.</p>
+      } @else {
+        <ul>
+          @for (outcome of notifications.outcomes(); track outcome.requestId) {
+            <li [class.unread]="notifications.isUnread(outcome.requestId)">
+              <article>
+                <h3>
+                  {{
+                    outcome.status === 'completed' ? 'Extração concluída' : 'Extração não concluída'
+                  }}
+                </h3>
+                <p>{{ outcome.message }}</p>
+                @if (outcome.result) {
+                  <p class="result-availability">
+                    O áudio foi extraído e armazenado com segurança.
+                  </p>
+                }
+                @if (notifications.isUnread(outcome.requestId)) {
+                  <button type="button" (click)="notifications.markRead(outcome.requestId)">
+                    Marcar como lida
+                  </button>
+                }
+              </article>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</section>

@@ -14,6 +14,18 @@ export interface AcceptedAudioExtraction {
   message: string;
 }
 
+export interface AudioExtractionStatus {
+  requestId: string;
+  status: 'accepted' | 'completed' | 'failed';
+  message: string;
+  createdAt: string;
+  result: {
+    audioPath: string;
+    durationSeconds: number;
+    contentType: 'audio/mpeg';
+  } | null;
+}
+
 interface RetryState {
   fingerprint: string;
   idempotencyKey: string;
@@ -57,6 +69,12 @@ export class AudioExtractionApiService {
         })
         .pipe(tap(() => this.clearRetryState(idempotencyKey)));
     });
+  }
+
+  getStatus(requestId: string): Observable<AudioExtractionStatus> {
+    return this.http.get<AudioExtractionStatus>(
+      `/api/audio-extractions/${encodeURIComponent(requestId)}`,
+    );
   }
 
   private getIdempotencyKey(fingerprint: string): string {

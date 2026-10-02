@@ -9,6 +9,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { AudioExtractionApiService, AcceptedAudioExtraction } from './audio-extraction-api.service';
+import { AudioExtractionNotificationService } from './notifications/audio-extraction-notification.service';
 
 const TIME_PATTERN = /^[0-9]{2,}:[0-5][0-9]:[0-5][0-9]$/;
 
@@ -86,6 +87,7 @@ function intervalValidator(control: AbstractControl): ValidationErrors | null {
 })
 export class AudioExtractionPage {
   private readonly api = inject(AudioExtractionApiService);
+  private readonly notifications = inject(AudioExtractionNotificationService);
   protected readonly submitting = signal(false);
   protected readonly accepted = signal<AcceptedAudioExtraction | null>(null);
   protected readonly errorMessage = signal('');
@@ -120,6 +122,7 @@ export class AudioExtractionPage {
     this.api.submit(this.form.getRawValue()).subscribe({
       next: (response) => {
         this.accepted.set(response);
+        this.notifications.trackRequest(response.requestId);
         this.submitting.set(false);
       },
       error: (error: unknown) => {
