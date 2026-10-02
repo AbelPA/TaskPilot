@@ -1,0 +1,222 @@
+{
+  "/Users/abel/Git/TaskPilot/.specify/feature.json": {
+    "mtime": 1790958939.0978582,
+    "ast_hash": "de8dc09f80a620a4f2d3063e5885d3ee",
+    "semantic_hash": "de8dc09f80a620a4f2d3063e5885d3ee"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/init-options.json": {
+    "mtime": 1790955584.9350185,
+    "ast_hash": "f9eadb6c3c1c36dd58ba4b672d40bb05",
+    "semantic_hash": "f9eadb6c3c1c36dd58ba4b672d40bb05"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/integration.json": {
+    "mtime": 1790955584.935072,
+    "ast_hash": "d2caafe740a0cc7dccd9e12150c33fbd",
+    "semantic_hash": "d2caafe740a0cc7dccd9e12150c33fbd"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/memory/.constitution-template.json": {
+    "mtime": 1790955584.9353054,
+    "ast_hash": "7e3332a78cec1722b4351c6bf52dfc51",
+    "semantic_hash": "7e3332a78cec1722b4351c6bf52dfc51"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/workflows/workflow-registry.json": {
+    "mtime": 1790955584.936303,
+    "ast_hash": "6a3f0f3312819b5590db285432735b52",
+    "semantic_hash": "6a3f0f3312819b5590db285432735b52"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/integrations/copilot.manifest.json": {
+    "mtime": 1790955584.9351656,
+    "ast_hash": "ec819b2c8a4605f8998be0921a7c252e",
+    "semantic_hash": "ec819b2c8a4605f8998be0921a7c252e"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/integrations/speckit.manifest.json": {
+    "mtime": 1790955584.9352198,
+    "ast_hash": "4711a490a472ae61d132743d0a670f39",
+    "semantic_hash": "4711a490a472ae61d132743d0a670f39"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/scripts/bash/common.sh": {
+    "mtime": 1790955584.935606,
+    "ast_hash": "25c605b27f2d27ca3f11754324cfc6a3",
+    "semantic_hash": "25c605b27f2d27ca3f11754324cfc6a3"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/scripts/bash/setup-plan.sh": {
+    "mtime": 1790955584.935817,
+    "ast_hash": "be48ee5a34eca6b5065a8f1fcfae4ff6",
+    "semantic_hash": "be48ee5a34eca6b5065a8f1fcfae4ff6"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/scripts/bash/setup-tasks.sh": {
+    "mtime": 1790955584.9358685,
+    "ast_hash": "30ec558a29cb7cee770f6a1238a6e68b",
+    "semantic_hash": "30ec558a29cb7cee770f6a1238a6e68b"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/scripts/bash/check-prerequisites.sh": {
+    "mtime": 1790955584.9355059,
+    "ast_hash": "2b87a46b23b366d3aba3f23e6885669a",
+    "semantic_hash": "2b87a46b23b366d3aba3f23e6885669a"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/scripts/bash/resolve-template.sh": {
+    "mtime": 1790955584.935762,
+    "ast_hash": "8e3dfe574895c76bb9cd555fea0ce54d",
+    "semantic_hash": "8e3dfe574895c76bb9cd555fea0ce54d"
+  },
+  "/Users/abel/Git/TaskPilot/.specify/scripts/bash/create-new-feature.sh": {
+    "mtime": 1790955584.9356906,
+    "ast_hash": "9943158db4bc47670e7f1a7f2eb36132",
+    "semantic_hash": "9943158db4bc47670e7f1a7f2eb36132"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/tsconfig.app.json": {
+    "mtime": 1790955584.9440475,
+    "ast_hash": "67a3f20f3c9369570c8dc70e3d5bb7ce",
+    "semantic_hash": "67a3f20f3c9369570c8dc70e3d5bb7ce"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/angular.json": {
+    "mtime": 1790955584.9406579,
+    "ast_hash": "4b1057d706419d5172174969f32ce64a",
+    "semantic_hash": "4b1057d706419d5172174969f32ce64a"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/package.json": {
+    "mtime": 1790955584.9431639,
+    "ast_hash": "933cb863adfe8e4b46b29f9c2b4867a0",
+    "semantic_hash": "933cb863adfe8e4b46b29f9c2b4867a0"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/tsconfig.json": {
+    "mtime": 1790955584.9441018,
+    "ast_hash": "d4886a8a9be1c35a2d17ab5e0f4439c2",
+    "semantic_hash": "d4886a8a9be1c35a2d17ab5e0f4439c2"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/tsconfig.spec.json": {
+    "mtime": 1790955584.944156,
+    "ast_hash": "9261a8f9db3b2c991df0e6f9d51828b1",
+    "semantic_hash": "9261a8f9db3b2c991df0e6f9d51828b1"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/init-options.json": {
+    "mtime": 1790955584.9378433,
+    "ast_hash": "f9eadb6c3c1c36dd58ba4b672d40bb05",
+    "semantic_hash": "f9eadb6c3c1c36dd58ba4b672d40bb05"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/integration.json": {
+    "mtime": 1790955584.9378855,
+    "ast_hash": "d2caafe740a0cc7dccd9e12150c33fbd",
+    "semantic_hash": "d2caafe740a0cc7dccd9e12150c33fbd"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/memory/.constitution-template.json": {
+    "mtime": 1790955584.9380805,
+    "ast_hash": "7e3332a78cec1722b4351c6bf52dfc51",
+    "semantic_hash": "7e3332a78cec1722b4351c6bf52dfc51"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/workflows/workflow-registry.json": {
+    "mtime": 1790955584.9403193,
+    "ast_hash": "7174e70eca3a4b24a88b6b50e9b3f1fa",
+    "semantic_hash": "7174e70eca3a4b24a88b6b50e9b3f1fa"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/integrations/copilot.manifest.json": {
+    "mtime": 1790955584.9379625,
+    "ast_hash": "9c806907171e32642449683ff417d2de",
+    "semantic_hash": "9c806907171e32642449683ff417d2de"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/integrations/speckit.manifest.json": {
+    "mtime": 1790955584.938015,
+    "ast_hash": "b82316bb735c9a70dccf46e33dbebb7b",
+    "semantic_hash": "b82316bb735c9a70dccf46e33dbebb7b"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/scripts/bash/common.sh": {
+    "mtime": 1790955584.9383156,
+    "ast_hash": "25c605b27f2d27ca3f11754324cfc6a3",
+    "semantic_hash": "25c605b27f2d27ca3f11754324cfc6a3"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/scripts/bash/setup-plan.sh": {
+    "mtime": 1790955584.9394698,
+    "ast_hash": "be48ee5a34eca6b5065a8f1fcfae4ff6",
+    "semantic_hash": "be48ee5a34eca6b5065a8f1fcfae4ff6"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/scripts/bash/setup-tasks.sh": {
+    "mtime": 1790955584.9395335,
+    "ast_hash": "30ec558a29cb7cee770f6a1238a6e68b",
+    "semantic_hash": "30ec558a29cb7cee770f6a1238a6e68b"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/scripts/bash/check-prerequisites.sh": {
+    "mtime": 1790955584.9382358,
+    "ast_hash": "2b87a46b23b366d3aba3f23e6885669a",
+    "semantic_hash": "2b87a46b23b366d3aba3f23e6885669a"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/scripts/bash/resolve-template.sh": {
+    "mtime": 1790955584.9394102,
+    "ast_hash": "8e3dfe574895c76bb9cd555fea0ce54d",
+    "semantic_hash": "8e3dfe574895c76bb9cd555fea0ce54d"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.specify/scripts/bash/create-new-feature.sh": {
+    "mtime": 1790955584.9393413,
+    "ast_hash": "9943158db4bc47670e7f1a7f2eb36132",
+    "semantic_hash": "9943158db4bc47670e7f1a7f2eb36132"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.vscode/extensions.json": {
+    "mtime": 1790955584.9404054,
+    "ast_hash": "d3b118b41884c371c18cbd55e392eb07",
+    "semantic_hash": "d3b118b41884c371c18cbd55e392eb07"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.vscode/launch.json": {
+    "mtime": 1790955584.9404535,
+    "ast_hash": "c6799d2f7ae6f5d7a740d1023654bb8d",
+    "semantic_hash": "c6799d2f7ae6f5d7a740d1023654bb8d"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.vscode/tasks.json": {
+    "mtime": 1790955584.9405546,
+    "ast_hash": "903821282d5c5b46a4673a263eeb9dee",
+    "semantic_hash": "903821282d5c5b46a4673a263eeb9dee"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/.vscode/mcp.json": {
+    "mtime": 1790955584.9405038,
+    "ast_hash": "f379347bd44231ed133462aa2ae502aa",
+    "semantic_hash": "f379347bd44231ed133462aa2ae502aa"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/src/main.ts": {
+    "mtime": 1790955584.9439363,
+    "ast_hash": "ac0b277dca1867b341af9e2d25224ae9",
+    "semantic_hash": "ac0b277dca1867b341af9e2d25224ae9"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/src/app/app.spec.ts": {
+    "mtime": 1790955584.9437807,
+    "ast_hash": "bc7ef27df6254100e259d87593db043c",
+    "semantic_hash": "bc7ef27df6254100e259d87593db043c"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/src/app/app.routes.ts": {
+    "mtime": 1790955584.9437063,
+    "ast_hash": "9e82134f3e41732656270447c4c872fe",
+    "semantic_hash": "9e82134f3e41732656270447c4c872fe"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/src/app/app.ts": {
+    "mtime": 1790955584.9438236,
+    "ast_hash": "498a4ba59c09a0137240a8212c03ed35",
+    "semantic_hash": "498a4ba59c09a0137240a8212c03ed35"
+  },
+  "/Users/abel/Git/TaskPilot/apps/web/src/app/app.config.ts": {
+    "mtime": 1790955584.9433484,
+    "ast_hash": "da471005d16ef07ff7f99a0cfcc8ea64",
+    "semantic_hash": "da471005d16ef07ff7f99a0cfcc8ea64"
+  },
+  "/Users/abel/Git/TaskPilot/apps/api/appsettings.json": {
+    "mtime": 1790957108.0441346,
+    "ast_hash": "732f4d75514e890746f0170256ed9654",
+    "semantic_hash": "732f4d75514e890746f0170256ed9654"
+  },
+  "/Users/abel/Git/TaskPilot/apps/api/api.csproj": {
+    "mtime": 1790957108.043517,
+    "ast_hash": "81c108f4e79b103e23bbda85eb080bd3",
+    "semantic_hash": "81c108f4e79b103e23bbda85eb080bd3"
+  },
+  "/Users/abel/Git/TaskPilot/apps/api/appsettings.Development.json": {
+    "mtime": 1790957108.0439396,
+    "ast_hash": "477a525a47fc9bdbbf94690e6633d843",
+    "semantic_hash": "477a525a47fc9bdbbf94690e6633d843"
+  },
+  "/Users/abel/Git/TaskPilot/apps/api/Program.cs": {
+    "mtime": 1790957108.0426698,
+    "ast_hash": "876cb4c9856b2e2ccade65639b59924a",
+    "semantic_hash": "876cb4c9856b2e2ccade65639b59924a"
+  },
+  "/Users/abel/Git/TaskPilot/apps/api/Properties/launchSettings.json": {
+    "mtime": 1790957108.0429358,
+    "ast_hash": "9f968347957f859ed7811b536cf6f3ef",
+    "semantic_hash": "9f968347957f859ed7811b536cf6f3ef"
+  }
+}

@@ -1,0 +1,41 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 15% 0%, rgb(204 251 241 / 65%), transparent 36rem), #f8fafc;
+}
+
+.app-header {
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(1.25rem, 6vw, 5rem);
+  border-bottom: 1px solid rgb(226 232 240 / 80%);
+  background: rgb(255 255 255 / 80%);
+}
+
+.brand,
+nav a {
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.brand {
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+nav a {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+nav a.active,
+nav a:hover {
+  background: #ccfbf1;
+  color: #115e59;
+}

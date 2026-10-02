@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://taskpilot.example/contracts/audio-extraction-failed.schema.json",
+  "title": "Audio Extraction Failed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "schemaVersion", "requestId", "occurredAt", "data"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "audio.extraction.failed" },
+    "schemaVersion": { "const": 1 },
+    "requestId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "retryable"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": ["VIDEO_UNAVAILABLE", "DOWNLOAD_FAILED", "EXTRACTION_FAILED", "STORAGE_FAILED", "RETRIES_EXHAUSTED"]
+        },
+        "message": { "type": "string", "maxLength": 240 },
+        "retryable": { "type": "boolean" }
+      }
+    }
+  }
+}
