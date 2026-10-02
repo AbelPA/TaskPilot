@@ -29,3 +29,19 @@ yarn-error.log*
 apps/web/node_modules/*
 
 
+# Api .Net
+bin/
+obj/
+.DS_Store
+
+# Worker Python
+audio_worker/media/
+apps/workers/audio/src/audio_worker/media/__pycache__/
+apps/workers/audio/src/audio_worker/messaging/__pycache__/
+apps/workers/audio/src/audio_worker/storage/__pycache__/
+apps/workers/audio/src/audio_worker/processing/__pycache__/
+apps/workers/audio/tests/__pycache__/
+graphify-out/
+apps/workers/audio/src/audio_worker/__pycache__/
+
+
