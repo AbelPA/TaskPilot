@@ -27,6 +27,13 @@ public static class AudioExtractionServiceRegistration
             .Validate(options => options.MaximumOutputBytes > 0)
             .Validate(options => options.WorkerTimeoutMinutes > 0)
             .Validate(options => options.RetentionDays > 0)
+            .Validate(options => IsValidStorageEndpoint(options.StorageEndpoint))
+            .Validate(options => string.IsNullOrWhiteSpace(options.StorageManagementEndpoint) ||
+                                 IsValidStorageEndpoint(options.StorageManagementEndpoint))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.StorageAccessKey))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.StorageSecretKey))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.StorageBucket))
+            .Validate(options => options.SignedUrlTtlSeconds is > 0 and <= 900)
             .Validate(options => !string.IsNullOrWhiteSpace(options.YouTubeApiKey),
                 "AudioExtraction:YouTubeApiKey must be configured.")
             .ValidateOnStart();
@@ -66,6 +73,10 @@ public static class AudioExtractionServiceRegistration
         services.AddHostedService<OutboxPublisher>();
         services.AddScoped<AudioExtractionRequestService>();
         services.AddScoped<AudioExtractionOutcomeService>();
+        services.AddScoped<AudioResultAccessService>();
+        services.AddScoped<ExpiredExtractionCleanupService>();
+        services.AddSingleton<IAudioObjectStore, MinioAudioObjectStore>();
+        services.AddHostedService<ExpiredExtractionCleanupService>();
         services.AddSingleton<IAudioExtractionNotificationPublisher, AudioExtractionNotificationPublisher>();
         services.AddHostedService<AudioExtractionOutcomeConsumer>();
         services.AddRateLimiter(rateLimiter =>
@@ -101,4 +112,12 @@ public static class AudioExtractionServiceRegistration
 
         return services;
     }
+
+    private static bool IsValidStorageEndpoint(string value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var endpoint) &&
+        endpoint.Scheme is "http" or "https" &&
+        endpoint.UserInfo.Length == 0 &&
+        endpoint.Query.Length == 0 &&
+        endpoint.Fragment.Length == 0 &&
+        endpoint.AbsolutePath == "/";
 }

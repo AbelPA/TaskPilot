@@ -12,4 +12,10 @@ public sealed class AudioExtractionOptions
     public int MaximumOutputBytes { get; set; } = 104_857_600;
     public int WorkerTimeoutMinutes { get; set; } = 15;
     public int RetentionDays { get; set; } = 7;
+    public string StorageEndpoint { get; set; } = string.Empty;
+    public string StorageManagementEndpoint { get; set; } = string.Empty;
+    public string StorageAccessKey { get; set; } = string.Empty;
+    public string StorageSecretKey { get; set; } = string.Empty;
+    public string StorageBucket { get; set; } = string.Empty;
+    public int SignedUrlTtlSeconds { get; set; } = 300;
 }

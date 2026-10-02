@@ -30,7 +30,47 @@ public static class AudioExtractionEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithTags("Audio extractions");
 
+        endpoints.MapGet("/api/audio-extractions/{requestId}/audio", GetAudioResultAsync)
+            .WithName("GetAudioExtractionAudio")
+            .Produces(StatusCodes.Status302Found)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
+            .WithTags("Audio extractions");
+
         return endpoints;
+    }
+
+    private static async Task<IResult> GetAudioResultAsync(
+        string requestId,
+        HttpContext httpContext,
+        AudioResultAccessService service,
+        CancellationToken cancellationToken,
+        [FromQuery(Name = "download")] bool download = false)
+    {
+        httpContext.Response.Headers.CacheControl = "no-store";
+        httpContext.Response.Headers["Referrer-Policy"] = "no-referrer";
+        try
+        {
+            var signedUrl = await service.GetProtectedAudioUrlAsync(
+                requestId,
+                download,
+                cancellationToken);
+            return signedUrl is null
+                ? Problem(
+                    StatusCodes.Status404NotFound,
+                    "Audio extraction not found",
+                    "A solicitação não foi encontrada.",
+                    "AUDIO_EXTRACTION_NOT_FOUND")
+                : Results.Redirect(signedUrl);
+        }
+        catch (AudioObjectStoreException)
+        {
+            return Problem(
+                StatusCodes.Status503ServiceUnavailable,
+                "Audio result unavailable",
+                "O áudio não está disponível para acesso agora. Tente novamente.",
+                "AUDIO_RESULT_UNAVAILABLE");
+        }
     }
 
     private static async Task<IResult> GetStatusAsync(

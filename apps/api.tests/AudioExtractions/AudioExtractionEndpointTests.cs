@@ -320,6 +320,10 @@ public sealed class AudioExtractionEndpointTests
                     ["ConnectionStrings:AudioExtraction"] = "Data Source=:memory:",
                     ["AudioExtraction:YouTubeApiKey"] = "test-api-key",
                     ["AudioExtraction:ApplyMigrationsOnStartup"] = "false",
+                    ["AudioExtraction:StorageEndpoint"] = "http://localhost:9000",
+                    ["AudioExtraction:StorageAccessKey"] = "test-access-key",
+                    ["AudioExtraction:StorageSecretKey"] = "test-secret-key",
+                    ["AudioExtraction:StorageBucket"] = "audio-extractions",
                     ["RabbitMq:HostName"] = "localhost",
                     ["RabbitMq:Port"] = "5672",
                     ["RabbitMq:UserName"] = "test",
@@ -346,7 +350,8 @@ public sealed class AudioExtractionEndpointTests
                                  descriptor.ServiceType == typeof(IHostedService) &&
                                  descriptor.ImplementationType is not null &&
                                  (descriptor.ImplementationType == typeof(Api.AudioExtractions.Persistence.OutboxPublisher) ||
-                                  descriptor.ImplementationType == typeof(Api.AudioExtractions.Messaging.AudioExtractionOutcomeConsumer)))
+                                  descriptor.ImplementationType == typeof(Api.AudioExtractions.Messaging.AudioExtractionOutcomeConsumer) ||
+                                  descriptor.ImplementationType == typeof(Api.AudioExtractions.Persistence.ExpiredExtractionCleanupService)))
                              .ToArray())
                 {
                     services.Remove(descriptor);
