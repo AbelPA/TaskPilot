@@ -66,7 +66,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__AudioExtraction: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      AudioExtraction__YouTubeApiKey: ${YOUTUBE_DATA_API_KEY:?Set YOUTUBE_DATA_API_KEY in .env}
+      AudioExtraction__YouTubeApiKey: ${YOUTUBE_DATA_API_KEY:?Export YOUTUBE_DATA_API_KEY in your shell before starting the application}
       AudioExtraction__ApplyMigrationsOnStartup: "true"
       AudioExtraction__StorageEndpoint: ${S3_PUBLIC_ENDPOINT:-http://localhost:8333}
       AudioExtraction__StorageManagementEndpoint: ${S3_ENDPOINT:-http://seaweedfs:8333}
