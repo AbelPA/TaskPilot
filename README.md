@@ -38,6 +38,7 @@ The script starts Docker if needed, creates `.env` from `.env.example` if it
 does not exist, and builds and starts the complete Docker Compose stack. Set
 `YOUTUBE_DATA_API_KEY` in `.env` to enable YouTube audio extraction. The web
 app is available at <http://localhost:4200>; RabbitMQ management is at
-<http://localhost:15672> and the MinIO console is at <http://localhost:9001>.
+<http://localhost:15672>. SeaweedFS provides the local S3 API at
+<http://localhost:8333> and the filer console at <http://localhost:8888>.
 Use `docker compose logs --follow` to view service output and
 `docker compose down` to stop the services.

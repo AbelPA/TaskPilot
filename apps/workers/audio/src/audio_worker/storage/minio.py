@@ -39,6 +39,10 @@ class MinioAudioStorage:
         )
         self._bucket = bucket
 
+    def ensure_bucket(self) -> None:
+        if not self._client.bucket_exists(self._bucket):
+            self._client.make_bucket(self._bucket)
+
     async def find_existing(
         self,
         request_id: str,

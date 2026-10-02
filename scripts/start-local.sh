@@ -64,6 +64,7 @@ docker compose up --detach --build --wait
 printf '\nAplicação iniciada:\n'
 printf '  Web:             http://localhost:4200\n'
 printf '  RabbitMQ:        http://localhost:15672\n'
-printf '  Console MinIO:   http://localhost:9001\n'
+printf '  API S3:          http://localhost:8333\n'
+printf '  Console filer:   http://localhost:8888\n'
 printf '\nPara acompanhar os logs: docker compose logs --follow\n'
 printf 'Para parar os serviços: docker compose down\n'
