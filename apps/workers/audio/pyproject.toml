@@ -8,6 +8,9 @@ dependencies = [
     "jsonschema>=4.23,<5",
     "minio>=7.2,<8",
     "openapi-spec-validator>=0.7,<1",
+    "opentelemetry-api>=1.31,<2",
+    "opentelemetry-exporter-otlp-proto-http>=1.31,<2",
+    "opentelemetry-sdk>=1.31,<2",
     "yt-dlp>=2025.1",
 ]
 

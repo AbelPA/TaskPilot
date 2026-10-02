@@ -32,6 +32,7 @@ describe('AudioExtractionApiService', () => {
     expect(pending.request.method).toBe('POST');
     expect(pending.request.body).toEqual(request);
     expect(pending.request.headers.get('Idempotency-Key')?.length).toBeGreaterThanOrEqual(16);
+    expect(pending.request.headers.get('traceparent')).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
     expect(localStorage.getItem('taskpilot.audio-extraction.retry')).not.toContain(
       'youtube.com/watch?v=',
     );

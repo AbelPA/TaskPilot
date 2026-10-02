@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Api.AudioExtractions.Configuration;
 using Api.AudioExtractions.Contracts;
+using Api.AudioExtractions.Observability;
 using Api.AudioExtractions.Persistence;
 using Api.AudioExtractions.Persistence.Entities;
 using Api.AudioExtractions.Validation;
@@ -136,6 +137,8 @@ public sealed class AudioExtractionRequestService(
             EventType = eventBody.EventType,
             SchemaVersion = eventBody.SchemaVersion,
             OccurredAt = now,
+            TraceParent = TraceContext.GetCurrentTraceParent(),
+            TraceState = System.Diagnostics.Activity.Current?.TraceStateString,
             PayloadJson = JsonSerializer.Serialize(eventBody, EventSerializerOptions),
             State = "pending",
             AttemptCount = 0,

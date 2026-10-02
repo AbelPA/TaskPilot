@@ -1,13 +1,11 @@
 import asyncio
 import logging
 
-import asyncio
-import logging
-
 import aio_pika
 
 from audio_worker.config import load_settings
 from audio_worker.messaging.consumer import consume_requests
+from audio_worker.observability import configure_tracing
 from audio_worker.messaging.topology import (
     DEAD_LETTER_EXCHANGE,
     EXCHANGE,
@@ -51,7 +49,7 @@ async def run() -> None:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
-    logging.basicConfig(level=logging.INFO)
+    configure_tracing()
     asyncio.run(run())
 
 

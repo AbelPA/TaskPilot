@@ -9,6 +9,12 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace Api.AudioExtractions.Configuration;
 
@@ -18,6 +24,42 @@ public static class AudioExtractionServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var otlpEndpoint = configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ??
+            configuration["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"] ??
+            "http://otel-lgtm:4318";
+
+        services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService(serviceName: "taskpilot-api"))
+            .WithTracing(tracing => tracing
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddSource("TaskPilot.AudioExtraction")
+                .AddOtlpExporter(options =>
+                {
+                    options.Endpoint = new Uri(otlpEndpoint.TrimEnd('/') + "/v1/traces");
+                    options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                }))
+            .WithMetrics(metrics => metrics
+                .AddAspNetCoreInstrumentation()
+                .AddRuntimeInstrumentation()
+                .AddOtlpExporter(options =>
+                {
+                    options.Endpoint = new Uri(otlpEndpoint.TrimEnd('/') + "/v1/metrics");
+                    options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                }));
+        services.AddLogging(logging => logging.AddOpenTelemetry(options =>
+        {
+            options.IncludeFormattedMessage = true;
+            options.IncludeScopes = true;
+            options.ParseStateValues = true;
+            options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "taskpilot-api"));
+            options.AddOtlpExporter(exporter =>
+            {
+                exporter.Endpoint = new Uri(otlpEndpoint.TrimEnd('/') + "/v1/logs");
+                exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+            });
+        }));
+
         services.AddOptions<AudioExtractionOptions>()
             .Bind(configuration.GetSection(AudioExtractionOptions.SectionName))
             .Validate(options => options.MaximumIntervalSeconds is > 0 and <= 1_800)

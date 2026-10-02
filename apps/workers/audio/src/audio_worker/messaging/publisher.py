@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 import aio_pika
+from opentelemetry.propagate import inject
 
 from audio_worker.messaging.consumer import ExtractionRequest
 from audio_worker.storage.audio_storage import StoredAudio
@@ -73,9 +74,12 @@ async def _publish(
         "occurredAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "data": data,
     }
+    headers: dict[str, str] = {}
+    inject(headers)
     await exchange.publish(
         aio_pika.Message(
             body=json.dumps(payload, separators=(",", ":")).encode(),
+            headers=headers or None,
             content_type="application/json",
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
             message_id=event_id,

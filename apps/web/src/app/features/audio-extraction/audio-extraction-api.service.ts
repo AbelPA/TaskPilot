@@ -63,9 +63,14 @@ export class AudioExtractionApiService {
       ]);
       const idempotencyKey = this.getIdempotencyKey(fingerprint);
 
+      const traceparent = this.generateTraceParent();
+
       return this.http
         .post<AcceptedAudioExtraction>('/api/audio-extractions', submission, {
-          headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }),
+          headers: new HttpHeaders({
+            'Idempotency-Key': idempotencyKey,
+            traceparent,
+          }),
         })
         .pipe(tap(() => this.clearRetryState(idempotencyKey)));
     });
@@ -118,5 +123,16 @@ export class AudioExtractionApiService {
     if (state.idempotencyKey === idempotencyKey) {
       localStorage.removeItem(RETRY_STATE_KEY);
     }
+  }
+
+  private generateTraceParent(): string {
+    const traceId = this.randomHex(32);
+    const spanId = this.randomHex(16);
+    return `00-${traceId}-${spanId}-01`;
+  }
+
+  private randomHex(length: number): string {
+    const bytes = crypto.getRandomValues(new Uint8Array(length / 2));
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 }

@@ -39,10 +39,13 @@ does not exist, and builds and starts the complete Docker Compose stack.
 Export `YOUTUBE_DATA_API_KEY` in your shell before running the script; it is
 read from the process environment and is not stored in `.env`. The web app is
 available at <http://localhost:4200>; RabbitMQ management is at
-<http://localhost:15672>. SeaweedFS provides the local S3 API at
+<http://localhost:15672>; the local Grafana/OTel LGTM dashboard is at
+<http://localhost:3000>. SeaweedFS provides the local S3 API at
 <http://localhost:8333> and the filer console at <http://localhost:8888>.
 Use `docker compose logs --follow` to view service output and
-`docker compose down` to stop the services.
+`docker compose down` to stop the services. The API and worker export traces to
+OTLP over HTTP so the same W3C `traceparent` can be followed from the browser,
+through RabbitMQ, and into the worker.
 
 On macOS, enter the key without echoing it or saving it in shell history:
 

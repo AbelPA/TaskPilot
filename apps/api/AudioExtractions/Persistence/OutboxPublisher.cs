@@ -1,6 +1,8 @@
 using System.Data.Common;
+using System.Diagnostics;
 using Api.AudioExtractions.Configuration;
 using Api.AudioExtractions.Messaging;
+using Api.AudioExtractions.Observability;
 using Api.AudioExtractions.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -40,6 +42,7 @@ public sealed class RabbitMqOutboxMessagePublisher(
             MessageId = message.EventId.ToString("D"),
             Type = message.EventType,
             ContentType = "application/json",
+            Headers = GetTraceHeaders(message),
         };
         var payload = System.Text.Encoding.UTF8.GetBytes(message.PayloadJson);
         await channel.BasicPublishAsync(
@@ -49,6 +52,28 @@ public sealed class RabbitMqOutboxMessagePublisher(
             properties,
             payload,
             cancellationToken);
+    }
+
+    private static IDictionary<string, object?>? GetTraceHeaders(OutboxMessageEntity message)
+    {
+        var headers = new Dictionary<string, object?>();
+        var assignedTraceParent = !string.IsNullOrWhiteSpace(message.TraceParent)
+            ? message.TraceParent
+            : TraceContext.GetCurrentTraceParent();
+        if (!string.IsNullOrWhiteSpace(assignedTraceParent))
+        {
+            headers["traceparent"] = assignedTraceParent;
+        }
+
+        var assignedTraceState = !string.IsNullOrWhiteSpace(message.TraceState)
+            ? message.TraceState
+            : Activity.Current?.TraceStateString;
+        if (!string.IsNullOrWhiteSpace(assignedTraceState))
+        {
+            headers["tracestate"] = assignedTraceState;
+        }
+
+        return headers.Count == 0 ? null : headers;
     }
 }
 
@@ -160,4 +185,26 @@ public sealed class OutboxPublisher(
         attemptCount >= SlowRetryThreshold
             ? TimeSpan.FromMinutes(30)
             : TimeSpan.FromSeconds(Math.Min(1 << Math.Min(attemptCount, 6), 60));
+
+    private static IDictionary<string, object?>? GetTraceHeaders(OutboxMessageEntity message)
+    {
+        var headers = new Dictionary<string, object?>();
+        var assignedTraceParent = !string.IsNullOrWhiteSpace(message.TraceParent)
+            ? message.TraceParent
+            : TraceContext.GetCurrentTraceParent();
+        if (!string.IsNullOrWhiteSpace(assignedTraceParent))
+        {
+            headers["traceparent"] = assignedTraceParent;
+        }
+
+        var assignedTraceState = !string.IsNullOrWhiteSpace(message.TraceState)
+            ? message.TraceState
+            : Activity.Current?.TraceStateString;
+        if (!string.IsNullOrWhiteSpace(assignedTraceState))
+        {
+            headers["tracestate"] = assignedTraceState;
+        }
+
+        return headers.Count == 0 ? null : headers;
+    }
 }
