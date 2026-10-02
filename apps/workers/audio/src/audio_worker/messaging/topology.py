@@ -14,7 +14,7 @@ async def declare_topology(channel: aio_pika.abc.AbstractChannel) -> None:
         aio_pika.ExchangeType.TOPIC,
         durable=True,
     )
-    await channel.declare_exchange(
+    dead_letter_exchange = await channel.declare_exchange(
         DEAD_LETTER_EXCHANGE,
         aio_pika.ExchangeType.TOPIC,
         durable=True,
