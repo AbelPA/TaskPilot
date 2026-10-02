@@ -28,4 +28,7 @@ yarn-debug.log*
 yarn-error.log*
 apps/web/node_modules/*
 
+# .NET build artifacts
+**/bin/
+**/obj/
 
