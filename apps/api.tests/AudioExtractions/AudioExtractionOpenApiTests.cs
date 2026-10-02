@@ -28,6 +28,28 @@ public sealed class AudioExtractionOpenApiTests
         Assert.Contains("'503':", postContract);
     }
 
+    [Fact]
+    public void Status_contract_supports_terminal_recovery_without_storage_details()
+    {
+        var contract = File.ReadAllText(FindRepositoryFile(
+            "specs",
+            "002-youtube-audio-extraction",
+            "contracts",
+            "audio-extractions.openapi.yaml"));
+        var statusPath = contract[
+            contract.IndexOf("  /api/audio-extractions/{requestId}:", StringComparison.Ordinal)..];
+        statusPath = statusPath[..statusPath.IndexOf("  /api/audio-extractions/{requestId}/audio:", StringComparison.Ordinal)];
+
+        Assert.Contains("operationId: getAudioExtraction", statusPath);
+        var statusSchema = contract[contract.IndexOf("    AudioExtractionStatus:", StringComparison.Ordinal)..];
+        statusSchema = statusSchema[..statusSchema.IndexOf("    Problem:", StringComparison.Ordinal)];
+        Assert.Contains("required: [requestId, status, message, createdAt, result]", statusSchema);
+        Assert.Contains("- type: 'null'", statusSchema);
+        Assert.Contains("audioPath:", statusSchema);
+        Assert.DoesNotContain("objectKey:", statusSchema);
+        Assert.DoesNotContain("signedUrl:", statusSchema);
+    }
+
     private static string FindRepositoryFile(params string[] pathParts)
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);

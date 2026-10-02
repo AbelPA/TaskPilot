@@ -263,7 +263,7 @@ public sealed class AudioExtractionEndpointTests
 
     private sealed record AcceptedResponse(string RequestId, string Status, string Message);
 
-    private sealed class AudioApiFactory : WebApplicationFactory<Program>
+    internal sealed class AudioApiFactory : WebApplicationFactory<Program>
     {
         private readonly SqliteConnection _connection = new("Data Source=:memory:");
 
@@ -344,7 +344,9 @@ public sealed class AudioExtractionEndpointTests
                 foreach (var descriptor in services
                              .Where(descriptor =>
                                  descriptor.ServiceType == typeof(IHostedService) &&
-                                 descriptor.ImplementationType == typeof(Api.AudioExtractions.Persistence.OutboxPublisher))
+                                 descriptor.ImplementationType is not null &&
+                                 (descriptor.ImplementationType == typeof(Api.AudioExtractions.Persistence.OutboxPublisher) ||
+                                  descriptor.ImplementationType == typeof(Api.AudioExtractions.Messaging.AudioExtractionOutcomeConsumer)))
                              .ToArray())
                 {
                     services.Remove(descriptor);
