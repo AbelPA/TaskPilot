@@ -11,9 +11,11 @@ WORKDIR /app
 COPY apps/workers/audio/pyproject.toml apps/workers/audio/uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
 COPY apps/workers/audio/src ./src
+COPY specs/002-youtube-audio-extraction/contracts/events /app/contracts/events
 RUN uv sync --locked --no-dev
 ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONPATH="/app/src"
+    PYTHONPATH="/app/src" \
+    AUDIO_EXTRACTION_SCHEMA_DIR="/app/contracts/events"
 RUN useradd --create-home --uid 10001 worker \
     && chown -R worker:worker /app
 USER worker
