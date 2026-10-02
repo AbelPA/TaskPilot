@@ -139,6 +139,69 @@ describe('AudioExtractionNotificationService', () => {
     http.expectNone(`/api/audio-extractions/${requestId}`);
   });
 
+  it('restores multiple terminal outcomes saved as request capabilities', async () => {
+    const secondRequestId = 'B'.repeat(43);
+    localStorage.setItem(REQUEST_IDS_KEY, JSON.stringify([requestId, secondRequestId]));
+    const connecting = service.connect();
+
+    const first = await expectRequest(`/api/audio-extractions/${requestId}`);
+    const second = await expectRequest(`/api/audio-extractions/${secondRequestId}`);
+    first.flush(status('completed'));
+    second.flush({
+      ...status('failed'),
+      requestId: secondRequestId,
+      createdAt: '2026-10-03T12:00:00Z',
+    });
+    await connecting;
+
+    expect(service.outcomes().map((outcome) => outcome.requestId)).toEqual([
+      secondRequestId,
+      requestId,
+    ]);
+    expect(connection.invocations).toEqual([
+      ['Subscribe', requestId],
+      ['Subscribe', secondRequestId],
+    ]);
+  });
+
+  it('clears an expired capability locally and shows a generic unavailable outcome', async () => {
+    localStorage.setItem(REQUEST_IDS_KEY, JSON.stringify([requestId]));
+    const connecting = service.connect();
+    const request = await expectRequest(`/api/audio-extractions/${requestId}`);
+    request.flush('Not found', {
+      status: 404,
+      statusText: 'Not Found',
+    });
+    await connecting;
+
+    expect(service.outcomes()[0]).toMatchObject({
+      requestId,
+      status: 'expired',
+      message: 'Este resultado expirou ou não está disponível.',
+      result: null,
+    });
+    expect(JSON.parse(localStorage.getItem(REQUEST_IDS_KEY) ?? '[]')).toEqual([]);
+    expect(JSON.parse(localStorage.getItem(READ_IDS_KEY) ?? '[]')).toEqual([]);
+  });
+
+  it('does not restore signed object URLs from untrusted status payloads', async () => {
+    localStorage.setItem(REQUEST_IDS_KEY, JSON.stringify([requestId]));
+    const connecting = service.connect();
+    const request = await expectRequest(`/api/audio-extractions/${requestId}`);
+    request.flush({
+      ...status('completed'),
+      result: {
+        audioPath: 'https://minio.example.test/private/object?signature=secret',
+        durationSeconds: 30,
+        contentType: 'audio/mpeg',
+      },
+    });
+    await connecting;
+
+    expect(service.outcomes()).toEqual([]);
+    expect(service.recoveryError()).toContain('recuperar o estado');
+  });
+
   it('rejects invalid saved request IDs before subscribing', async () => {
     localStorage.setItem(REQUEST_IDS_KEY, JSON.stringify(['not-a-capability']));
     const connecting = service.connect();

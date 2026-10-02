@@ -26,15 +26,29 @@
             <li [class.unread]="notifications.isUnread(outcome.requestId)">
               <article>
                 <h3>
-                  {{
-                    outcome.status === 'completed' ? 'Extração concluída' : 'Extração não concluída'
-                  }}
+                  @if (outcome.status === 'completed') {
+                    Extração concluída
+                  } @else if (outcome.status === 'failed') {
+                    Extração não concluída
+                  } @else {
+                    Áudio expirado ou indisponível
+                  }
                 </h3>
                 <p>{{ outcome.message }}</p>
                 @if (outcome.result) {
                   <p class="result-availability">
                     O áudio foi extraído e armazenado com segurança.
                   </p>
+                  <audio controls preload="none" [src]="outcome.result.audioPath">
+                    Seu navegador não oferece suporte à reprodução de áudio.
+                  </audio>
+                  <a
+                    [href]="outcome.result.audioPath + '?download=true'"
+                    download="audio.mp3"
+                    rel="noreferrer"
+                  >
+                    Baixar áudio
+                  </a>
                 }
                 @if (notifications.isUnread(outcome.requestId)) {
                   <button type="button" (click)="notifications.markRead(outcome.requestId)">

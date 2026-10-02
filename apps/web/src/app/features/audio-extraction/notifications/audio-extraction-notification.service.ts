@@ -5,9 +5,8 @@ import { PLATFORM_ID } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { firstValueFrom } from 'rxjs';
 import { AudioExtractionApiService, AudioExtractionStatus } from '../audio-extraction-api.service';
+import { RequestCapabilityStore } from './request-capability-store';
 
-const REQUEST_IDS_KEY = 'taskpilot.audio-extraction.request-ids';
-const READ_IDS_KEY = 'taskpilot.audio-extraction.read-ids';
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 export interface AudioExtractionHubConnection {
@@ -18,6 +17,9 @@ export interface AudioExtractionHubConnection {
   onreconnected(callback: () => void): void;
   onclose(callback: () => void): void;
 }
+
+export type AudioExtractionNotificationOutcome =
+  AudioExtractionStatus | (Omit<AudioExtractionStatus, 'status'> & { status: 'expired' });
 
 class SignalRConnectionAdapter implements AudioExtractionHubConnection {
   constructor(private readonly connection: HubConnection) {}
@@ -66,12 +68,13 @@ export class AudioExtractionNotificationService {
   private readonly api = inject(AudioExtractionApiService);
   private readonly createConnection = inject(AUDIO_EXTRACTION_HUB_CONNECTION_FACTORY);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly capabilityStore = inject(RequestCapabilityStore);
   private readonly requestIds = signal<string[]>([]);
   private readonly readIds = signal<string[]>([]);
   private connection?: AudioExtractionHubConnection;
   private connecting?: Promise<void>;
 
-  readonly outcomes = signal<AudioExtractionStatus[]>([]);
+  readonly outcomes = signal<AudioExtractionNotificationOutcome[]>([]);
   readonly connectionState = signal<'disconnected' | 'connecting' | 'connected'>('disconnected');
   readonly recoveryError = signal('');
   readonly unreadCount = computed(
@@ -82,8 +85,8 @@ export class AudioExtractionNotificationService {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    this.requestIds.set(this.readIdsFromStorage(REQUEST_IDS_KEY));
-    this.readIds.set(this.readIdsFromStorage(READ_IDS_KEY));
+    this.requestIds.set(this.capabilityStore.getRequestIds(() => this.invalidLocalState()));
+    this.readIds.set(this.capabilityStore.getReadIds(() => this.invalidLocalState()));
   }
 
   async connect(): Promise<void> {
@@ -94,8 +97,8 @@ export class AudioExtractionNotificationService {
       return this.connecting;
     }
 
-    this.requestIds.set(this.readIdsFromStorage(REQUEST_IDS_KEY));
-    this.readIds.set(this.readIdsFromStorage(READ_IDS_KEY));
+    this.requestIds.set(this.capabilityStore.getRequestIds(() => this.invalidLocalState()));
+    this.readIds.set(this.capabilityStore.getReadIds(() => this.invalidLocalState()));
     this.connectionState.set('connecting');
     const connection = this.createConnection();
     this.connection = connection;
@@ -132,10 +135,9 @@ export class AudioExtractionNotificationService {
       return;
     }
 
-    const requestIds = [...new Set([...this.requestIds(), requestId])];
-    this.requestIds.set(requestIds);
     try {
-      localStorage.setItem(REQUEST_IDS_KEY, JSON.stringify(requestIds));
+      this.capabilityStore.addRequestId(requestId);
+      this.requestIds.set(this.capabilityStore.getRequestIds());
     } catch {
       this.recoveryError.set('Não foi possível guardar esta solicitação neste navegador.');
       return;
@@ -147,10 +149,9 @@ export class AudioExtractionNotificationService {
   }
 
   markRead(requestId: string): void {
-    const readIds = [...new Set([...this.readIds(), requestId])];
-    this.readIds.set(readIds);
     try {
-      localStorage.setItem(READ_IDS_KEY, JSON.stringify(readIds));
+      this.capabilityStore.markRead(requestId);
+      this.readIds.set(this.capabilityStore.getReadIds());
     } catch {
       this.recoveryError.set('Não foi possível salvar o estado de leitura neste navegador.');
     }
@@ -174,10 +175,21 @@ export class AudioExtractionNotificationService {
 
     try {
       const status = await firstValueFrom(this.api.getStatus(requestId));
+      if (!isAudioExtractionStatus(status)) {
+        this.recoveryError.set('Não foi possível recuperar o estado de uma solicitação.');
+        return;
+      }
       this.acceptStatus(status);
     } catch (error) {
       if (error instanceof HttpErrorResponse && error.status === 404) {
         this.removeRequestId(requestId);
+        this.acceptStatus({
+          requestId,
+          status: 'expired',
+          message: 'Este resultado expirou ou não está disponível.',
+          createdAt: new Date().toISOString(),
+          result: null,
+        });
         return;
       }
       this.recoveryError.set('Não foi possível recuperar o estado de uma solicitação.');
@@ -191,8 +203,12 @@ export class AudioExtractionNotificationService {
     this.acceptStatus(value);
   }
 
-  private acceptStatus(status: AudioExtractionStatus): void {
-    if (status.status !== 'completed' && status.status !== 'failed') {
+  private acceptStatus(status: AudioExtractionNotificationOutcome): void {
+    if (
+      status.status !== 'completed' &&
+      status.status !== 'failed' &&
+      status.status !== 'expired'
+    ) {
       return;
     }
     const current = this.outcomes().filter((item) => item.requestId !== status.requestId);
@@ -202,36 +218,17 @@ export class AudioExtractionNotificationService {
   }
 
   private removeRequestId(requestId: string): void {
-    const requestIds = this.requestIds().filter((item) => item !== requestId);
-    this.requestIds.set(requestIds);
     try {
-      localStorage.setItem(REQUEST_IDS_KEY, JSON.stringify(requestIds));
+      this.capabilityStore.removeRequestId(requestId);
+      this.requestIds.set(this.capabilityStore.getRequestIds());
+      this.readIds.set(this.capabilityStore.getReadIds());
     } catch {
       this.recoveryError.set('Não foi possível atualizar as solicitações deste navegador.');
     }
   }
 
-  private readIdsFromStorage(key: string): string[] {
-    const saved = localStorage.getItem(key);
-    if (!saved) {
-      return [];
-    }
-    try {
-      const value: unknown = JSON.parse(saved);
-      if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) {
-        throw new SyntaxError('Invalid request ID storage.');
-      }
-      return value.filter((item) => REQUEST_ID_PATTERN.test(item));
-    } catch (error) {
-      if (!(error instanceof SyntaxError)) {
-        throw error;
-      }
-      localStorage.removeItem(key);
-      this.recoveryError.set(
-        'Os dados locais de notificações estavam inválidos e foram removidos.',
-      );
-      return [];
-    }
+  private invalidLocalState(): void {
+    this.recoveryError.set('Os dados locais de notificações estavam inválidos e foram removidos.');
   }
 }
 
@@ -240,16 +237,26 @@ function isAudioExtractionStatus(value: unknown): value is AudioExtractionStatus
     return false;
   }
   const status = value as Partial<AudioExtractionStatus>;
-  return (
-    typeof status.requestId === 'string' &&
-    REQUEST_ID_PATTERN.test(status.requestId) &&
-    (status.status === 'completed' || status.status === 'failed') &&
-    typeof status.message === 'string' &&
-    typeof status.createdAt === 'string' &&
-    (status.result === null ||
-      (typeof status.result === 'object' &&
-        typeof status.result.audioPath === 'string' &&
-        typeof status.result.durationSeconds === 'number' &&
-        status.result.contentType === 'audio/mpeg'))
-  );
+  if (
+    typeof status.requestId !== 'string' ||
+    !REQUEST_ID_PATTERN.test(status.requestId) ||
+    typeof status.message !== 'string' ||
+    typeof status.createdAt !== 'string'
+  ) {
+    return false;
+  }
+
+  const requestId = status.requestId;
+  if (status.status === 'completed') {
+    return (
+      status.result !== null &&
+      typeof status.result === 'object' &&
+      status.result.audioPath === `/api/audio-extractions/${encodeURIComponent(requestId)}/audio` &&
+      Number.isInteger(status.result.durationSeconds) &&
+      status.result.durationSeconds > 0 &&
+      status.result.contentType === 'audio/mpeg'
+    );
+  }
+
+  return (status.status === 'accepted' || status.status === 'failed') && status.result === null;
 }
