@@ -35,10 +35,21 @@ From the repository root, run:
 ```
 
 The script starts Docker if needed, creates `.env` from `.env.example` if it
-does not exist, and builds and starts the complete Docker Compose stack. Set
-`YOUTUBE_DATA_API_KEY` in `.env` to enable YouTube audio extraction. The web
-app is available at <http://localhost:4200>; RabbitMQ management is at
+does not exist, and builds and starts the complete Docker Compose stack.
+Export `YOUTUBE_DATA_API_KEY` in your shell before running the script; it is
+read from the process environment and is not stored in `.env`. The web app is
+available at <http://localhost:4200>; RabbitMQ management is at
 <http://localhost:15672>. SeaweedFS provides the local S3 API at
 <http://localhost:8333> and the filer console at <http://localhost:8888>.
 Use `docker compose logs --follow` to view service output and
 `docker compose down` to stop the services.
+
+On macOS, enter the key without echoing it or saving it in shell history:
+
+```bash
+printf 'YouTube Data API key: '
+read -r -s YOUTUBE_DATA_API_KEY
+printf '\n'
+export YOUTUBE_DATA_API_KEY
+./scripts/start-local.sh
+```
