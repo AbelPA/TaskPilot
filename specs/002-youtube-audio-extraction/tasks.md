@@ -67,7 +67,7 @@ Every task uses the required format `- [ ] T### [P?] [US#?] Description with con
 - [X] T028 [US1] Add the “Extract Audio” navigation entry, route, and initial app shell in `apps/web/src/app/app.routes.ts`, `apps/web/src/app/app.html`, and `apps/web/src/app/app.ts`, replacing the generated welcome screen without introducing another Angular app.
 - [X] T029 [US1] Add `apps/api.tests/AudioExtractions/OutboxPublisherTests.cs` for publish confirmation, broker reconnect after outage, stable event ID across retries, and no message loss after committed acceptance.
 
-**Checkpoint**: User Story 1 can be demonstrated end-to-end through durable `202` acceptance and eventual RabbitMQ publication; extraction need not be complete for this MVP checkpoint.
+**Checkpoint**: User Story 1 implementation and automated test tasks are complete. A live end-to-end demonstration against PostgreSQL, RabbitMQ, and YouTube has not been run; extraction need not be complete for this MVP checkpoint.
 
 ## Phase 4: User Story 2 - Receive progress outcomes (Priority: P1)
 

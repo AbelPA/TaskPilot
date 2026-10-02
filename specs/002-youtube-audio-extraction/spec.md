@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-02
 
-**Status**: Draft
+**Status**: In progress — User Story 1 implementation complete; User Stories 2 and 3 pending.
 
 **Input**: User description: Add asynchronous extraction of a requested audio interval from a YouTube video, with request validation, durable processing, secure result access, and real-time user notifications using the existing Angular and .NET applications and a new Python worker.
 
