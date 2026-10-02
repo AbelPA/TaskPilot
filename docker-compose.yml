@@ -37,6 +37,7 @@ services:
     volumes:
       - minio-data:/data
     ports:
+      - "9000:9000"
       - "9001:9001"
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:9000/minio/health/live"]
@@ -71,6 +72,12 @@ services:
       ConnectionStrings__AudioExtraction: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       AudioExtraction__YouTubeApiKey: ${YOUTUBE_DATA_API_KEY:?Set YOUTUBE_DATA_API_KEY in .env}
       AudioExtraction__ApplyMigrationsOnStartup: "true"
+      AudioExtraction__StorageEndpoint: ${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
+      AudioExtraction__StorageManagementEndpoint: ${MINIO_ENDPOINT:-http://minio:9000}
+      AudioExtraction__StorageAccessKey: ${MINIO_ROOT_USER}
+      AudioExtraction__StorageSecretKey: ${MINIO_ROOT_PASSWORD}
+      AudioExtraction__StorageBucket: ${MINIO_BUCKET:-audio-extractions}
+      AudioExtraction__SignedUrlTtlSeconds: 300
       RabbitMq__HostName: rabbitmq
       RabbitMq__Port: 5672
       RabbitMq__UserName: ${RABBITMQ_USER}

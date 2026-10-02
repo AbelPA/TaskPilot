@@ -91,6 +91,13 @@ paths:
       summary: Obtain a short-lived reference to a completed audio artifact
       parameters:
         - $ref: '#/components/parameters/RequestId'
+        - in: query
+          name: download
+          required: false
+          description: Set true to request an attachment response for browser download.
+          schema:
+            type: boolean
+            default: false
       responses:
         '302':
           description: Redirect to a short-lived signed URL for the private object.
@@ -99,6 +106,14 @@ paths:
               schema:
                 type: string
                 format: uri
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Referrer-Policy:
+              schema:
+                type: string
+                const: no-referrer
         '404':
           description: Request is unknown, expired, or has no completed result.
           content:

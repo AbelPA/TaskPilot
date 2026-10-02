@@ -107,16 +107,16 @@ Every task uses the required format `- [ ] T### [P?] [US#?] Description with con
 
 ### Tests for User Story 3
 
-- [ ] T046 [P] [US3] Add artifact access tests in `apps/api.tests/AudioExtractions/AudioExtractionResultTests.cs` for completed, unknown, malformed, uncompleted, failed, and expired IDs; confirm identical not-found behavior and no public object URL disclosure.
-- [ ] T047 [P] [US3] Add Angular persistence/recovery tests in `apps/web/src/app/features/audio-extraction/notifications/notification-center.spec.ts` for retaining only request capabilities in browser-local state, restoring multiple outcomes, marking notifications read locally, and clearing expired entries.
-- [ ] T048 [P] [US3] Add worker retention/storage integration tests in `apps/workers/audio/tests/test_audio_storage.py` for private bucket access, 100 MiB output limit, checksum verification, deterministic object key, and seven-day artifact expiration metadata.
+- [X] T046 [P] [US3] Add artifact access tests in `apps/api.tests/AudioExtractions/AudioExtractionResultTests.cs` for completed, unknown, malformed, uncompleted, failed, and expired IDs; confirm identical not-found behavior and no public object URL disclosure.
+- [X] T047 [P] [US3] Add Angular persistence/recovery tests in `apps/web/src/app/features/audio-extraction/notifications/notification-center.spec.ts` for retaining only request capabilities in browser-local state, restoring multiple outcomes, marking notifications read locally, and clearing expired entries.
+- [X] T048 [P] [US3] Add worker retention/storage integration tests in `apps/workers/audio/tests/test_audio_storage.py` for private bucket access, 100 MiB output limit, checksum verification, deterministic object key, and seven-day artifact expiration metadata.
 
 ### Implementation for User Story 3
 
-- [ ] T049 [US3] Implement `GET /api/audio-extractions/{requestId}/audio` in `apps/api/AudioExtractions/Endpoints/AudioExtractionEndpoints.cs` and `apps/api/AudioExtractions/Services/AudioResultAccessService.cs`, checking completion/expiry before creating a short-lived signed object URL and returning no-store/no-referrer headers without revealing bucket or key.
-- [ ] T050 [US3] Implement terminal expiry and cleanup in `apps/api/AudioExtractions/Persistence/ExpiredExtractionCleanupService.cs` and `apps/workers/audio/src/audio_worker/storage/retention.py`, retaining outcomes for seven days after completion, deleting expired objects and records safely, and never expiring pending accepted work.
-- [ ] T051 [US3] Implement browser request-ID and local read-state persistence in `apps/web/src/app/features/audio-extraction/notifications/request-capability-store.ts`, keeping IDs out of shareable URLs and avoiding storage of signed media URLs.
-- [ ] T052 [US3] Add notification actions in `apps/web/src/app/features/audio-extraction/notifications/notification-center.html` and `notification-center.ts` for play/download through `/api/audio-extractions/{requestId}/audio`, and display expired/failed state without leaking object-storage details.
+- [X] T049 [US3] Implement `GET /api/audio-extractions/{requestId}/audio` in `apps/api/AudioExtractions/Endpoints/AudioExtractionEndpoints.cs` and `apps/api/AudioExtractions/Services/AudioResultAccessService.cs`, checking completion/expiry before creating a short-lived signed object URL and returning no-store/no-referrer headers without revealing bucket or key.
+- [X] T050 [US3] Implement terminal expiry and cleanup in `apps/api/AudioExtractions/Persistence/ExpiredExtractionCleanupService.cs` and `apps/workers/audio/src/audio_worker/storage/retention.py`, retaining outcomes for seven days after completion, deleting expired objects and records safely, and never expiring pending accepted work.
+- [X] T051 [US3] Implement browser request-ID and local read-state persistence in `apps/web/src/app/features/audio-extraction/notifications/request-capability-store.ts`, keeping IDs out of shareable URLs and avoiding storage of signed media URLs.
+- [X] T052 [US3] Add notification actions in `apps/web/src/app/features/audio-extraction/notifications/notification-center.html` and `notification-center.ts` for play/download through `/api/audio-extractions/{requestId}/audio`, and display expired/failed state without leaking object-storage details.
 
 **Checkpoint**: The owner-less capability flow supports persistent recovery and protected audio retrieval for completed, unexpired requests.
 

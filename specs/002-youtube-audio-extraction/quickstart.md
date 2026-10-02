@@ -1,6 +1,6 @@
 # Quickstart: YouTube Audio Extraction
 
-This guide describes the local developer path for the current User Story 2 slice and the target path for the complete feature. The API accepts and durably queues requests; the Python worker extracts and privately stores the requested interval; terminal outcomes are persisted and delivered through SignalR or recovered through the request-specific status endpoint. The protected audio retrieval endpoint and long-term cleanup are implemented in User Story 3.
+This guide describes the local developer path for the complete feature. The API accepts and durably queues requests; the Python worker extracts and privately stores the requested interval; terminal outcomes are persisted and delivered through SignalR or recovered through the request-specific status endpoint. Completed audio is available through a short-lived signed reference, and terminal records/artifacts are removed after seven days.
 
 ## Prerequisites
 
@@ -14,6 +14,7 @@ This guide describes the local developer path for the current User Story 2 slice
 ## Start the local stack
 
 1. Copy `.env.example` to `.env`, replace the local-only password placeholders, and supply a YouTube Data API v3 key with quota. Keep `.env` out of version control.
+   `MINIO_PUBLIC_ENDPOINT` must be reachable by the browser for short-lived signed result links; the local default is `http://localhost:9000`.
 2. Start the complete local stack:
 
    ```sh
@@ -31,6 +32,8 @@ This guide describes the local developer path for the current User Story 2 slice
 4. Confirm the outbox publisher sends the persistent `audio.extraction.requested` event after RabbitMQ is available and that the worker consumes it, downloads only the canonical YouTube video, extracts the interval with FFmpeg, and stores the verified MP3 in the private MinIO bucket.
 5. Submit invalid URLs/timestamps and confirm no request or outbox row is created.
 6. Keep the request page open and confirm the terminal outcome appears in the notification center without polling. Disconnect before completion, reconnect, and confirm the saved request capability recovers its persisted outcome.
+7. Reload the page and confirm saved notifications return. Mark one as read, play a completed result through `/api/audio-extractions/{requestId}/audio`, and use its download action through `/api/audio-extractions/{requestId}/audio?download=true`; neither action should put the request ID in the browser address bar or save a signed storage URL in local storage.
+8. Confirm completed and failed outcomes remain available for seven days, then the audio object and terminal request/notification records are cleaned up. Pending accepted requests must not expire.
 
 ## Validate failure and recovery paths
 
@@ -55,7 +58,9 @@ The contract test job validates the OpenAPI document and the JSON Schemas under 
 - A broker interruption does not lose a committed request.
 - Each accepted request has one durable pending outbox event and returns the same capability for an identical idempotent retry.
 - A broker outage does not discard an accepted request or its pending event.
-- Completion and failure state is persisted and can be recovered at `GET /api/audio-extractions/{requestId}`. Direct protected audio playback/download is not available until User Story 3.
+- Completion and failure state is persisted and can be recovered at `GET /api/audio-extractions/{requestId}`.
+- Completed audio is retrieved through `GET /api/audio-extractions/{requestId}/audio`, which redirects to a short-lived signed URL with `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
+- Terminal state and its audio artifact expire seven days after the outcome; pending accepted work has no expiry.
 
 ## Safety
 
