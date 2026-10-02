@@ -146,7 +146,7 @@ components:
     AudioExtractionStatus:
       type: object
       additionalProperties: false
-      required: [requestId, status, createdAt]
+      required: [requestId, status, message, createdAt, result]
       properties:
         requestId:
           type: string
@@ -159,16 +159,20 @@ components:
         message:
           type: string
         result:
-          type: object
-          properties:
-            durationSeconds:
-              type: integer
-              minimum: 1
-            contentType:
-              const: audio/mpeg
-            audioPath:
-              type: string
-              description: Relative API path; does not expose object storage.
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [durationSeconds, contentType, audioPath]
+              properties:
+                durationSeconds:
+                  type: integer
+                  minimum: 1
+                contentType:
+                  const: audio/mpeg
+                audioPath:
+                  type: string
+                  description: Relative API path; does not expose object storage.
+            - type: 'null'
     Problem:
       type: object
       description: RFC 9457 Problem Details with a stable application error code.

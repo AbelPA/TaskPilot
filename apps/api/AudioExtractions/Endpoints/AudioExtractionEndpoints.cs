@@ -1,4 +1,5 @@
 using System.Data.Common;
+using Api.AudioExtractions.Contracts;
 using Api.AudioExtractions.Services;
 using Api.AudioExtractions.YouTube;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,30 @@ public static class AudioExtractionEndpoints
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
             .WithTags("Audio extractions");
 
+        endpoints.MapGet("/api/audio-extractions/{requestId}", GetStatusAsync)
+            .WithName("GetAudioExtraction")
+            .Produces<AudioExtractionStatusResponse>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithTags("Audio extractions");
+
         return endpoints;
+    }
+
+    private static async Task<IResult> GetStatusAsync(
+        string requestId,
+        HttpContext httpContext,
+        AudioExtractionOutcomeService service,
+        CancellationToken cancellationToken)
+    {
+        httpContext.Response.Headers.CacheControl = "no-store";
+        var status = await service.GetStatusAsync(requestId, cancellationToken);
+        return status is null
+            ? Problem(
+                StatusCodes.Status404NotFound,
+                "Audio extraction not found",
+                "A solicitação não foi encontrada.",
+                "AUDIO_EXTRACTION_NOT_FOUND")
+            : Results.Ok(status);
     }
 
     private static async Task<IResult> CreateAsync(

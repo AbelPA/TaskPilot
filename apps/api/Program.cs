@@ -1,8 +1,11 @@
 using Api.AudioExtractions.Configuration;
 using Api.AudioExtractions.Endpoints;
+using Api.AudioExtractions.Messaging;
+using Api.AudioExtractions.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Warning);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -31,6 +34,7 @@ app.MapGet(
             : Results.StatusCode(StatusCodes.Status503ServiceUnavailable))
     .WithName("Health");
 app.MapAudioExtractionEndpoints();
+app.MapHub<AudioExtractionsHub>("/hubs/audio-extractions");
 
 if (app.Configuration.GetValue("AudioExtraction:ApplyMigrationsOnStartup", true))
 {

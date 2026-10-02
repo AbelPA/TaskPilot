@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Api.AudioExtractions.Messaging;
+using Api.AudioExtractions.Notifications;
 using Api.AudioExtractions.Persistence;
 using Api.AudioExtractions.Services;
 using Api.AudioExtractions.YouTube;
@@ -45,6 +46,7 @@ public static class AudioExtractionServiceRegistration
         }
 
         services.AddDbContext<AudioExtractionDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddSignalR();
         services.AddOptions<RabbitMqOptions>()
             .Bind(configuration.GetSection(RabbitMqOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.HostName))
@@ -63,6 +65,9 @@ public static class AudioExtractionServiceRegistration
         services.AddSingleton<IOutboxMessagePublisher, RabbitMqOutboxMessagePublisher>();
         services.AddHostedService<OutboxPublisher>();
         services.AddScoped<AudioExtractionRequestService>();
+        services.AddScoped<AudioExtractionOutcomeService>();
+        services.AddSingleton<IAudioExtractionNotificationPublisher, AudioExtractionNotificationPublisher>();
+        services.AddHostedService<AudioExtractionOutcomeConsumer>();
         services.AddRateLimiter(rateLimiter =>
         {
             rateLimiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
