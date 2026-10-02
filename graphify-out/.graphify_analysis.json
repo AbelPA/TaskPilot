@@ -1,0 +1,585 @@
+{
+  "communities": {
+    "0": [
+      "apps_web_package_json",
+      "web_package_dependencies",
+      "web_package_dependencies_angular_common",
+      "web_package_dependencies_angular_compiler",
+      "web_package_dependencies_angular_core",
+      "web_package_dependencies_angular_forms",
+      "web_package_dependencies_angular_platform_browser",
+      "web_package_dependencies_angular_router",
+      "web_package_dependencies_rxjs",
+      "web_package_dependencies_tslib",
+      "web_package_devdependencies",
+      "web_package_devdependencies_angular_build",
+      "web_package_devdependencies_angular_cli",
+      "web_package_devdependencies_jsdom",
+      "web_package_devdependencies_prettier",
+      "web_package_devdependencies_typescript",
+      "web_package_devdependencies_vitest",
+      "web_package_name",
+      "web_package_packagemanager",
+      "web_package_private",
+      "web_package_scripts",
+      "web_package_scripts_build",
+      "web_package_scripts_ng",
+      "web_package_scripts_start",
+      "web_package_scripts_test",
+      "web_package_scripts_watch",
+      "web_package_version"
+    ],
+    "1": [
+      "web_angular_architect_build",
+      "web_angular_architect_serve",
+      "web_angular_architect_test",
+      "web_angular_build_configurations",
+      "web_angular_build_defaultconfiguration",
+      "web_angular_build_options",
+      "web_angular_configurations_development",
+      "web_angular_configurations_production",
+      "web_angular_development_extractlicenses",
+      "web_angular_development_optimization",
+      "web_angular_development_sourcemap",
+      "web_angular_options_assets",
+      "web_angular_options_browser",
+      "web_angular_options_inlinestylelanguage",
+      "web_angular_options_styles",
+      "web_angular_options_tsconfig",
+      "web_angular_production_budgets",
+      "web_angular_production_buildtarget",
+      "web_angular_production_outputhashing",
+      "web_angular_test_builder",
+      "web_angular_web_architect"
+    ],
+    "2": [
+      "specify_scripts_bash_common_sh",
+      "specify_scripts_bash_common_sh_bash_common_check_dir",
+      "specify_scripts_bash_common_sh_bash_common_check_file",
+      "specify_scripts_bash_common_sh_bash_common_find_specify_root",
+      "specify_scripts_bash_common_sh_bash_common_format_speckit_command",
+      "specify_scripts_bash_common_sh_bash_common_get_current_branch",
+      "specify_scripts_bash_common_sh_bash_common_get_feature_paths",
+      "specify_scripts_bash_common_sh_bash_common_get_invoke_separator",
+      "specify_scripts_bash_common_sh_bash_common_get_repo_root",
+      "specify_scripts_bash_common_sh_bash_common_has_jq",
+      "specify_scripts_bash_common_sh_bash_common_json_escape",
+      "specify_scripts_bash_common_sh_bash_common_persist_feature_json",
+      "specify_scripts_bash_common_sh_bash_common_python3_command",
+      "specify_scripts_bash_common_sh_bash_common_read_feature_json_feature_directory",
+      "specify_scripts_bash_common_sh_bash_common_resolve_specify_init_dir",
+      "specify_scripts_bash_common_sh_bash_common_resolve_template_content",
+      "specify_scripts_bash_common_sh_bash_common_sorted_extension_ids",
+      "specify_scripts_bash_resolve_template_sh",
+      "users_abel_git_taskpilot_specify_scripts_bash_common_sh__entry",
+      "users_abel_git_taskpilot_specify_scripts_bash_resolve_template_sh__entry"
+    ],
+    "3": [
+      "apps_web_specify_scripts_bash_common_sh",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_check_dir",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_check_file",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_find_specify_root",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_format_speckit_command",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_get_current_branch",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_get_feature_paths",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_get_invoke_separator",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_get_repo_root",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_has_jq",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_json_escape",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_persist_feature_json",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_python3_command",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_read_feature_json_feature_directory",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_resolve_specify_init_dir",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_resolve_template",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_resolve_template_content",
+      "apps_web_specify_scripts_bash_common_sh_bash_common_sorted_extension_ids",
+      "users_abel_git_taskpilot_apps_web_specify_scripts_bash_common_sh__entry"
+    ],
+    "4": [
+      "apps_web_specify_integrations_speckit_manifest_json",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_gitignore",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_check_prerequisites_sh",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_common_sh",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_create_new_feature_sh",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_resolve_template_sh",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_setup_plan_sh",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_setup_tasks_sh",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_templates_checklist_template_md",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_templates_constitution_template_md",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_templates_plan_template_md",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_templates_spec_template_md",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_templates_tasks_template_md",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_installed_at",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_integration",
+      "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_version"
+    ],
+    "5": [
+      "specify_init_options_json",
+      "specify_init_options_json_specify_init_options_ai",
+      "specify_init_options_json_specify_init_options_ai_skills",
+      "specify_init_options_json_specify_init_options_feature_numbering",
+      "specify_init_options_json_specify_init_options_here",
+      "specify_init_options_json_specify_init_options_script",
+      "specify_init_options_json_specify_init_options_speckit_version",
+      "specify_integration_json",
+      "specify_integration_json_specify_integration_copilot_invoke_separator",
+      "specify_integration_json_specify_integration_copilot_script",
+      "specify_integration_json_specify_integration_default_integration",
+      "specify_integration_json_specify_integration_installed_integrations",
+      "specify_integration_json_specify_integration_integration",
+      "specify_integration_json_specify_integration_integration_settings",
+      "specify_integration_json_specify_integration_integration_settings_copilot",
+      "specify_integration_json_specify_integration_integration_state_schema",
+      "specify_integration_json_specify_integration_version"
+    ],
+    "6": [
+      "apps_web_angular_json",
+      "web_angular_cli",
+      "web_angular_cli_analytics",
+      "web_angular_cli_packagemanager",
+      "web_angular_newprojectroot",
+      "web_angular_projects",
+      "web_angular_projects_web",
+      "web_angular_schema",
+      "web_angular_schematics_angular_component_style",
+      "web_angular_schematics_schematics_angular_component",
+      "web_angular_version",
+      "web_angular_web_prefix",
+      "web_angular_web_projecttype",
+      "web_angular_web_root",
+      "web_angular_web_schematics",
+      "web_angular_web_sourceroot"
+    ],
+    "7": [
+      "apps_web_specify_integrations_copilot_manifest_json",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_analyze_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_checklist_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_clarify_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_constitution_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_converge_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_implement_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_plan_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_specify_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_tasks_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_taskstoissues_skill_md",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_installed_at",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_integration",
+      "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_version"
+    ],
+    "8": [
+      "specify_integrations_speckit_manifest_json",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_gitignore",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_check_prerequisites_sh",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_common_sh",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_create_new_feature_sh",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_resolve_template_sh",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_scripts_bash_setup_plan_sh",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_templates_checklist_template_md",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_templates_constitution_template_md",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_templates_spec_template_md",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files_specify_templates_tasks_template_md",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_installed_at",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_integration",
+      "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_version"
+    ],
+    "9": [
+      "constitution_memory",
+      "constitution_template",
+      "spec_template",
+      "specify_memory_constitution_template_json_memory_constitution_template_sha256",
+      "specify_memory_constitution_template_json_memory_constitution_template_source",
+      "speckit_constitution_skill",
+      "speckit_converge_skill",
+      "speckit_implement_skill",
+      "speckit_plan_skill",
+      "speckit_specify_skill",
+      "speckit_tasks_skill",
+      "tasks_template",
+      "workflow_speckit",
+      "youtube_audio_extraction_spec"
+    ],
+    "10": [
+      "apps_api_properties_launchsettings_json",
+      "properties_launchsettings_environmentvariables_aspnetcore_environment",
+      "properties_launchsettings_http_applicationurl",
+      "properties_launchsettings_http_commandname",
+      "properties_launchsettings_http_dotnetrunmessages",
+      "properties_launchsettings_http_environmentvariables",
+      "properties_launchsettings_http_launchbrowser",
+      "properties_launchsettings_profiles",
+      "properties_launchsettings_profiles_http",
+      "properties_launchsettings_profiles_https",
+      "properties_launchsettings_schema"
+    ],
+    "11": [
+      "apps_web_specify_integration_json",
+      "apps_web_specify_integration_json_specify_integration_copilot_invoke_separator",
+      "apps_web_specify_integration_json_specify_integration_copilot_script",
+      "apps_web_specify_integration_json_specify_integration_default_integration",
+      "apps_web_specify_integration_json_specify_integration_installed_integrations",
+      "apps_web_specify_integration_json_specify_integration_integration",
+      "apps_web_specify_integration_json_specify_integration_integration_settings",
+      "apps_web_specify_integration_json_specify_integration_integration_settings_copilot",
+      "apps_web_specify_integration_json_specify_integration_integration_state_schema",
+      "apps_web_specify_integration_json_specify_integration_version"
+    ],
+    "12": [
+      "apps_web_specify_workflows_workflow_registry_json",
+      "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_schema_version",
+      "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_description",
+      "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_installed_at",
+      "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_name",
+      "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_source",
+      "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_updated_at",
+      "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_version",
+      "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_workflows",
+      "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_workflows_speckit"
+    ],
+    "13": [
+      "specify_integrations_copilot_manifest_json",
+      "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files",
+      "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_analyze_skill_md",
+      "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_constitution_skill_md",
+      "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_plan_skill_md",
+      "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_tasks_skill_md",
+      "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files_github_skills_speckit_taskstoissues_skill_md",
+      "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_installed_at",
+      "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_integration",
+      "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_version"
+    ],
+    "14": [
+      "specify_workflows_workflow_registry_json",
+      "specify_workflows_workflow_registry_json_workflows_workflow_registry_schema_version",
+      "specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_description",
+      "specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_installed_at",
+      "specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_name",
+      "specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_source",
+      "specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_updated_at",
+      "specify_workflows_workflow_registry_json_workflows_workflow_registry_speckit_version",
+      "specify_workflows_workflow_registry_json_workflows_workflow_registry_workflows",
+      "specify_workflows_workflow_registry_json_workflows_workflow_registry_workflows_speckit"
+    ],
+    "15": [
+      "apps_api_dotnet",
+      "apps_web_angular",
+      "dev_angular_agent",
+      "dev_dotnet_agent",
+      "dev_python_agent",
+      "reviewer_agent",
+      "security_agent",
+      "tech_lead_agent",
+      "tester_agent"
+    ],
+    "16": [
+      "apps_web_specify_scripts_bash_create_new_feature_sh",
+      "apps_web_specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_clean_branch_name",
+      "apps_web_specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_fit_branch_name",
+      "apps_web_specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_generate_branch_name",
+      "apps_web_specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_get_highest_from_specs",
+      "apps_web_specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_is_feature_number_in_range",
+      "apps_web_specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_shell_quote",
+      "apps_web_specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_spec_prefix_exists",
+      "users_abel_git_taskpilot_apps_web_specify_scripts_bash_create_new_feature_sh__entry"
+    ],
+    "17": [
+      "specify_scripts_bash_create_new_feature_sh",
+      "specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_clean_branch_name",
+      "specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_fit_branch_name",
+      "specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_generate_branch_name",
+      "specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_get_highest_from_specs",
+      "specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_is_feature_number_in_range",
+      "specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_shell_quote",
+      "specify_scripts_bash_create_new_feature_sh_bash_create_new_feature_spec_prefix_exists",
+      "users_abel_git_taskpilot_specify_scripts_bash_create_new_feature_sh__entry"
+    ],
+    "18": [
+      "apps_web_specify_init_options_json",
+      "apps_web_specify_init_options_json_specify_init_options_ai",
+      "apps_web_specify_init_options_json_specify_init_options_ai_skills",
+      "apps_web_specify_init_options_json_specify_init_options_feature_numbering",
+      "apps_web_specify_init_options_json_specify_init_options_here",
+      "apps_web_specify_init_options_json_specify_init_options_integration",
+      "apps_web_specify_init_options_json_specify_init_options_script",
+      "apps_web_specify_init_options_json_specify_init_options_speckit_version"
+    ],
+    "19": [
+      "app_app_app",
+      "app_app_config_appconfig",
+      "app_app_routes_routes",
+      "apps_web_src_app_app_routes_ts",
+      "apps_web_src_app_app_spec_ts",
+      "apps_web_src_app_app_ts",
+      "apps_web_src_main_ts"
+    ],
+    "20": [
+      "api_appsettings_allowedhosts",
+      "api_appsettings_logging",
+      "api_appsettings_logging_loglevel",
+      "api_appsettings_loglevel_default",
+      "api_appsettings_loglevel_microsoft_aspnetcore",
+      "apps_api_appsettings_json"
+    ],
+    "21": [
+      "api_appsettings_development_logging",
+      "api_appsettings_development_logging_loglevel",
+      "api_appsettings_development_loglevel_default",
+      "api_appsettings_development_loglevel_microsoft_aspnetcore",
+      "apps_api_appsettings_development_json"
+    ],
+    "22": [
+      "apps_api_api_csproj",
+      "framework_net10_0",
+      "nuget_microsoft_aspnetcore_openapi",
+      "sdk_microsoft_net_sdk_web"
+    ],
+    "23": [
+      "apps_web_specify_memory_constitution_template_json",
+      "apps_web_specify_memory_constitution_template_json_memory_constitution_template_sha256",
+      "apps_web_specify_memory_constitution_template_json_memory_constitution_template_source"
+    ],
+    "24": [
+      "apps_web_vscode_launch_json",
+      "vscode_launch_configurations",
+      "vscode_launch_version"
+    ],
+    "25": [
+      "apps_web_vscode_tasks_json",
+      "vscode_tasks_tasks",
+      "vscode_tasks_version"
+    ],
+    "26": [
+      "apps_web_specify_scripts_bash_setup_plan_sh",
+      "users_abel_git_taskpilot_apps_web_specify_scripts_bash_setup_plan_sh__entry"
+    ],
+    "27": [
+      "apps_web_specify_scripts_bash_setup_tasks_sh",
+      "users_abel_git_taskpilot_apps_web_specify_scripts_bash_setup_tasks_sh__entry"
+    ],
+    "28": [
+      "apps_web_vscode_extensions_json",
+      "vscode_extensions_recommendations"
+    ],
+    "29": [
+      "engineering_standards",
+      "graphify_context_discovery_spec"
+    ],
+    "30": [
+      "specify_feature_feature_directory",
+      "specify_feature_json"
+    ],
+    "31": [
+      "specify_scripts_bash_setup_plan_sh",
+      "users_abel_git_taskpilot_specify_scripts_bash_setup_plan_sh__entry"
+    ],
+    "32": [
+      "specify_scripts_bash_setup_tasks_sh",
+      "users_abel_git_taskpilot_specify_scripts_bash_setup_tasks_sh__entry"
+    ],
+    "33": [
+      "constitution_doc",
+      "speckit_analyze_skill"
+    ],
+    "34": [
+      "apps_web_specify_scripts_bash_check_prerequisites_sh",
+      "users_abel_git_taskpilot_apps_web_specify_scripts_bash_check_prerequisites_sh__entry"
+    ],
+    "35": [
+      "apps_web_specify_scripts_bash_resolve_template_sh",
+      "users_abel_git_taskpilot_apps_web_specify_scripts_bash_resolve_template_sh__entry"
+    ],
+    "36": [
+      "specify_scripts_bash_check_prerequisites_sh"
+    ],
+    "37": [
+      "apps_web_tsconfig_app_json"
+    ],
+    "38": [
+      "apps_web_tsconfig_json"
+    ],
+    "39": [
+      "apps_web_tsconfig_spec_json"
+    ],
+    "40": [
+      "apps_api_program_cs"
+    ],
+    "41": [
+      "speckit_taskstoissues_skill"
+    ],
+    "42": [
+      "plan_template"
+    ],
+    "43": [
+      "readme_taskpilot"
+    ],
+    "44": [
+      "speckit_checklist_skill"
+    ],
+    "45": [
+      "speckit_clarify_skill"
+    ]
+  },
+  "cohesion": {
+    "0": 0.07692307692307693,
+    "1": 0.11904761904761904,
+    "2": 0.11052631578947368,
+    "3": 0.11695906432748537,
+    "4": 0.11764705882352941,
+    "5": 0.11764705882352941,
+    "6": 0.125,
+    "7": 0.13333333333333333,
+    "8": 0.13333333333333333,
+    "9": 0.1978021978021978,
+    "10": 0.2727272727272727,
+    "11": 0.2,
+    "12": 0.2,
+    "13": 0.2,
+    "14": 0.2,
+    "15": 0.2222222222222222,
+    "16": 0.3055555555555556,
+    "17": 0.3055555555555556,
+    "18": 0.25,
+    "19": 0.42857142857142855,
+    "20": 0.3333333333333333,
+    "21": 0.4,
+    "22": 0.5,
+    "23": 0.6666666666666666,
+    "24": 0.6666666666666666,
+    "25": 0.6666666666666666,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0,
+    "32": 1.0,
+    "33": 1.0,
+    "34": 1.0,
+    "35": 1.0,
+    "36": 1.0,
+    "37": 1.0,
+    "38": 1.0,
+    "39": 1.0,
+    "40": 1.0,
+    "41": 1.0,
+    "42": 1.0,
+    "43": 1.0,
+    "44": 1.0,
+    "45": 1.0
+  },
+  "gods": [
+    {
+      "id": "apps_web_specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files",
+      "label": "files",
+      "degree": 13
+    },
+    {
+      "id": "specify_integrations_speckit_manifest_json_integrations_speckit_manifest_files",
+      "label": "files",
+      "degree": 11
+    },
+    {
+      "id": "apps_web_specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files",
+      "label": "files",
+      "degree": 11
+    },
+    {
+      "id": "specify_workflows_workflow_registry_json_workflows_workflow_registry_workflows_speckit",
+      "label": "speckit",
+      "degree": 7
+    },
+    {
+      "id": "web_angular_projects_web",
+      "label": "web",
+      "degree": 7
+    },
+    {
+      "id": "apps_web_specify_workflows_workflow_registry_json_workflows_workflow_registry_workflows_speckit",
+      "label": "speckit",
+      "degree": 7
+    },
+    {
+      "id": "specify_integrations_copilot_manifest_json_integrations_copilot_manifest_files",
+      "label": "files",
+      "degree": 6
+    },
+    {
+      "id": "web_angular_build_options",
+      "label": "options",
+      "degree": 6
+    },
+    {
+      "id": "web_package_scripts",
+      "label": "scripts",
+      "degree": 6
+    },
+    {
+      "id": "properties_launchsettings_profiles_http",
+      "label": "http",
+      "degree": 6
+    }
+  ],
+  "surprises": [
+    {
+      "source": "YouTube Audio Extraction Spec",
+      "target": "speckit-tasks",
+      "source_files": [
+        "specs/002-youtube-audio-extraction/spec.md",
+        "apps/web/.github/skills/speckit-tasks/SKILL.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `YouTube Audio Extraction Spec` unexpectedly reaches hub `speckit-tasks`"
+    },
+    {
+      "source": "Graphify Context Discovery Spec",
+      "target": "Engineering Standards",
+      "source_files": [
+        "specs/001-graphify-context-discovery/spec.md",
+        "apps/web/docs/engineering-standards.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "Angular Developer Agent",
+      "target": "Angular Web App",
+      "source_files": [
+        ".github/agents/dev-angular.agent.md",
+        "apps/web/README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "implements",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "speckit-analyze",
+      "target": "Project Constitution",
+      "source_files": [
+        ".github/skills/speckit-analyze/SKILL.md",
+        ".specify/memory/constitution.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "speckit-plan",
+      "target": "speckit-specify",
+      "source_files": [
+        "apps/web/.github/skills/speckit-plan/SKILL.md",
+        "apps/web/.github/skills/speckit-specify/SKILL.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source"
+    }
+  ],
+  "tokens": {
+    "input": 108152,
+    "output": 6660
+  }
+}

@@ -32,3 +32,14 @@ apps/web/node_modules/*
 **/bin/
 **/obj/
 
+# Python worker artifacts
+**/.venv/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/*.egg-info/
+**/build/
+**/.DS_Store
+
+# Others
+/graphify-out/cache/
