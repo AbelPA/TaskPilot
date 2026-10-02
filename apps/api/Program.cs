@@ -1,8 +1,14 @@
+using Api.AudioExtractions.Configuration;
+using Api.AudioExtractions.Endpoints;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddAudioExtractions(builder.Configuration);
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -12,30 +18,28 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
+app.UseExceptionHandler();
+app.UseRateLimiter();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.MapGet(
+    "/health",
+    async (Api.AudioExtractions.Persistence.AudioExtractionDbContext dbContext, CancellationToken cancellationToken) =>
+        await dbContext.Database.CanConnectAsync(cancellationToken)
+            ? Results.Ok(new { status = "healthy" })
+            : Results.StatusCode(StatusCodes.Status503ServiceUnavailable))
+    .WithName("Health");
+app.MapAudioExtractionEndpoints();
 
-app.MapGet("/weatherforecast", () =>
+if (app.Configuration.GetValue("AudioExtraction:ApplyMigrationsOnStartup", true))
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<
+        Api.AudioExtractions.Persistence.AudioExtractionDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+public partial class Program;

@@ -1,0 +1,14 @@
+{
+  "eventId": "e703797d-3b15-4913-b0c2-e6b124be8a44",
+  "eventType": "audio.extraction.completed",
+  "schemaVersion": 1,
+  "requestId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "occurredAt": "2026-10-02T16:18:23Z",
+  "data": {
+    "objectKey": "audio-extractions/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/audio.mp3",
+    "contentType": "audio/mpeg",
+    "durationSeconds": 195,
+    "sizeBytes": 1240000,
+    "checksumSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+}
