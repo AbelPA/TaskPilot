@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import re
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -10,6 +9,7 @@ from minio.error import S3Error
 
 from audio_worker.media.ffmpeg_processor import ProcessedAudio
 from audio_worker.storage.models import AudioStorageError, StoredAudio
+from audio_worker.storage.retention import expiration_metadata
 
 
 class MinioAudioStorage:
@@ -123,7 +123,7 @@ class MinioAudioStorage:
         if existing is not None and abs(existing.duration_seconds - audio.duration_seconds) <= 2:
             return existing
 
-        expires_at = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+        expires_at = expiration_metadata()
         try:
             self._client.fput_object(
                 self._bucket,
