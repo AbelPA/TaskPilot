@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "tech-lead",
+  "instructions": [
+    "docs/engineering-standards.md"
+  ],
+  "skills": {
+    "paths": [
+      ".github/skills"
+    ]
+  }
+}
