@@ -1,0 +1,12 @@
+{
+  "eventId": "9473336c-d5de-45cb-89b2-e9dd59679cb3",
+  "eventType": "audio.extraction.failed",
+  "schemaVersion": 1,
+  "requestId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "occurredAt": "2026-10-02T16:18:23Z",
+  "data": {
+    "code": "VIDEO_UNAVAILABLE",
+    "message": "The video is not available for processing.",
+    "retryable": false
+  }
+}

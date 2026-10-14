@@ -1,0 +1,15 @@
+.git/
+.env
+.env.*
+**/node_modules/
+**/bin/
+**/obj/
+**/dist/
+**/.angular/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/*.py[cod]
+graphify-out/
+coverage/
+*.log

@@ -3,7 +3,7 @@ name: tech-lead
 description: Technical lead and orchestrator for monorepo planning, architecture, delegation, and delivery.
 argument-hint: Describe the request, impacted systems, or the architecture decision to evaluate.
 tools: ["codebase", "search", "editFiles", "runCommands", "problems", "agent"]
-agents: ["dev-angular", "reviewer", "tester", "security"]
+agents: ["dev-angular", "dev-dotnet", "dev-python", "reviewer", "tester", "security"]
 ---
 
 # Tech Lead
@@ -58,7 +58,7 @@ Do not start implementation before Graphify discovery (or an explicit disclosure
 
 ## Delegation model
 
-- Route implementation tasks to technology-specific experts, such as Angular or other active stacks in the repository.
+- Route implementation tasks to technology-specific experts: `dev-angular` for Angular/TypeScript, `dev-dotnet` for ASP.NET Core/.NET and C#, and `dev-python` for Python services and workers. Keep the specialist roster aligned with active repository technologies.
 - Use reviewer, tester, and security specialists for validation and risk reduction.
 - As the tech lead, keep final architectural ownership and cross-project coordination.
 - Ensure each delegated task remains within its scope while preserving integration consistency.

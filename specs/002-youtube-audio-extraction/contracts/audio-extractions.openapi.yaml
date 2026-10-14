@@ -1,0 +1,206 @@
+openapi: 3.1.0
+info:
+  title: YouTube Audio Extraction API
+  version: 1.0.0
+  description: Request and retrieve asynchronous audio extraction outcomes. The requestId is an unguessable bearer capability; no sign-in is required.
+servers:
+  - url: http://localhost:5290
+paths:
+  /api/audio-extractions:
+    post:
+      operationId: createAudioExtraction
+      summary: Submit a YouTube audio extraction request
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          description: Optional client-generated key to make a retry of the same submission return the original request.
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AudioExtractionRequest'
+            example:
+              url: https://www.youtube.com/watch?v=XXXXXXXXXXX
+              start: '00:05:30'
+              end: '00:08:45'
+      responses:
+        '202':
+          description: Request and outbox event were durably accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedAudioExtraction'
+        '400':
+          description: Invalid URL, timestamp, or request body.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: YouTube video does not exist or is not accessible.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Idempotency key was already used with different request values.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Request rate limit exceeded.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '503':
+          description: YouTube metadata service or durable request storage is unavailable.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/audio-extractions/{requestId}:
+    get:
+      operationId: getAudioExtraction
+      summary: Get status and terminal outcome for a known request capability
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Request status and, if terminal, its safe notification/result metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudioExtractionStatus'
+        '404':
+          description: Request ID is unknown or expired; response does not reveal other request existence.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/audio-extractions/{requestId}/audio:
+    get:
+      operationId: getAudioExtractionAudio
+      summary: Obtain a short-lived reference to a completed audio artifact
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - in: query
+          name: download
+          required: false
+          description: Set true to request an attachment response for browser download.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '302':
+          description: Redirect to a short-lived signed URL for the private object.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Referrer-Policy:
+              schema:
+                type: string
+                const: no-referrer
+        '404':
+          description: Request is unknown, expired, or has no completed result.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+components:
+  parameters:
+    RequestId:
+      in: path
+      name: requestId
+      required: true
+      description: 256-bit random base64url capability; keep private.
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9_-]{43}$'
+  schemas:
+    AudioExtractionRequest:
+      type: object
+      additionalProperties: false
+      required: [url, start, end]
+      properties:
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+        start:
+          type: string
+          pattern: '^[0-9]{2,}:[0-5][0-9]:[0-5][0-9]$'
+        end:
+          type: string
+          pattern: '^[0-9]{2,}:[0-5][0-9]:[0-5][0-9]$'
+    AcceptedAudioExtraction:
+      type: object
+      additionalProperties: false
+      required: [requestId, status, message]
+      properties:
+        requestId:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{43}$'
+        status:
+          const: accepted
+        message:
+          type: string
+    AudioExtractionStatus:
+      type: object
+      additionalProperties: false
+      required: [requestId, status, message, createdAt, result]
+      properties:
+        requestId:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{43}$'
+        status:
+          enum: [accepted, completed, failed]
+        createdAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+        result:
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [durationSeconds, contentType, audioPath]
+              properties:
+                durationSeconds:
+                  type: integer
+                  minimum: 1
+                contentType:
+                  const: audio/mpeg
+                audioPath:
+                  type: string
+                  description: Relative API path; does not expose object storage.
+            - type: 'null'
+    Problem:
+      type: object
+      description: RFC 9457 Problem Details with a stable application error code.
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+      required: [title, status]

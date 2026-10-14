@@ -1,0 +1,13 @@
+{
+  "eventId": "1f4ca1d5-f9c2-4b21-945f-36f01fd8f207",
+  "eventType": "audio.extraction.requested",
+  "schemaVersion": 1,
+  "requestId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "occurredAt": "2026-10-02T16:15:23Z",
+  "data": {
+    "videoId": "abcdefghijk",
+    "startSeconds": 330,
+    "endSeconds": 525,
+    "outputFormat": "mp3"
+  }
+}
