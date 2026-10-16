@@ -1,5 +1,4 @@
 using Api.AudioExtractions.Contracts;
-using Microsoft.AspNetCore.SignalR;
 
 namespace Api.AudioExtractions.Notifications;
 
@@ -9,12 +8,14 @@ public interface IAudioExtractionNotificationPublisher
 }
 
 public sealed class AudioExtractionNotificationPublisher(
-    IHubContext<AudioExtractionsHub> hubContext) : IAudioExtractionNotificationPublisher
+    AudioExtractionNotificationStreamRegistry registry) : IAudioExtractionNotificationPublisher
 {
     public Task PublishAsync(
         AudioExtractionStatusResponse notification,
-        CancellationToken cancellationToken) =>
-        hubContext.Clients
-            .Group(AudioExtractionsHub.GetGroupName(notification.RequestId))
-            .SendAsync("extractionUpdated", notification, cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        registry.Publish(notification);
+        return Task.CompletedTask;
+    }
 }

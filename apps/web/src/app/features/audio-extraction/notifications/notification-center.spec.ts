@@ -2,8 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
-  AUDIO_EXTRACTION_HUB_CONNECTION_FACTORY,
-  AudioExtractionHubConnection,
+  AUDIO_EXTRACTION_EVENT_SOURCE_FACTORY,
+  AudioExtractionEventSource,
 } from './audio-extraction-notification.service';
 import { AudioExtractionNotificationCenter } from './notification-center';
 
@@ -12,34 +12,43 @@ const secondRequestId = 'B'.repeat(43);
 const REQUEST_IDS_KEY = 'taskpilot.audio-extraction.request-ids';
 const READ_IDS_KEY = 'taskpilot.audio-extraction.read-ids';
 
-class FakeHubConnection implements AudioExtractionHubConnection {
-  async start(): Promise<void> {}
+class FakeEventSource implements AudioExtractionEventSource {
+  readyState = 0;
+  onopen: ((event: Event) => unknown) | null = null;
+  onerror: ((event: Event) => unknown) | null = null;
 
-  async invoke(): Promise<void> {}
+  addEventListener(): void {}
 
-  on(): void {}
+  open(): void {
+    this.readyState = 1;
+    this.onopen?.(new Event('open'));
+  }
 
-  onreconnecting(): void {}
-
-  onreconnected(): void {}
-
-  onclose(): void {}
+  close(): void {
+    this.readyState = 2;
+  }
 }
 
 describe('AudioExtractionNotificationCenter', () => {
   let fixture: ComponentFixture<AudioExtractionNotificationCenter>;
   let http: HttpTestingController;
+  let sources: FakeEventSource[];
 
   beforeEach(() => {
     localStorage.clear();
+    sources = [];
     TestBed.configureTestingModule({
       imports: [AudioExtractionNotificationCenter],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         {
-          provide: AUDIO_EXTRACTION_HUB_CONNECTION_FACTORY,
-          useValue: () => new FakeHubConnection(),
+          provide: AUDIO_EXTRACTION_EVENT_SOURCE_FACTORY,
+          useValue: () => {
+            const source = new FakeEventSource();
+            sources.push(source);
+            return source;
+          },
         },
       ],
     });
@@ -50,6 +59,11 @@ describe('AudioExtractionNotificationCenter', () => {
 
   it('renders a protected playback control and download action for a restored result', async () => {
     createFixture([requestId, secondRequestId]);
+    (await expectRegistration()).flush({
+      streamUrl: '/api/audio-extractions/notification-streams/ticket/events',
+    });
+    await vi.waitFor(() => expect(sources).toHaveLength(1));
+    sources[0].open();
     const path = `/api/audio-extractions/${requestId}/audio`;
     const firstRequest = await expectStatusRequest(requestId);
     const secondRequest = await expectStatusRequest(secondRequestId);
@@ -102,6 +116,11 @@ describe('AudioExtractionNotificationCenter', () => {
 
   it('shows a generic expired state and removes expired local capabilities', async () => {
     createFixture([requestId]);
+    (await expectRegistration()).flush({
+      streamUrl: '/api/audio-extractions/notification-streams/ticket/events',
+    });
+    await vi.waitFor(() => expect(sources).toHaveLength(1));
+    sources[0].open();
     const request = await expectStatusRequest(requestId);
     request.flush('Not found', {
       status: 404,
@@ -122,12 +141,21 @@ describe('AudioExtractionNotificationCenter', () => {
   function createFixture(requestIds: string[]): void {
     localStorage.setItem(REQUEST_IDS_KEY, JSON.stringify(requestIds));
     fixture = TestBed.createComponent(AudioExtractionNotificationCenter);
+    fixture.detectChanges();
   }
 
   async function expectStatusRequest(requestId: string) {
     let request: ReturnType<HttpTestingController['expectOne']> | undefined;
     await vi.waitFor(() => {
       request = http.expectOne(`/api/audio-extractions/${requestId}`);
+    });
+    return request!;
+  }
+
+  async function expectRegistration() {
+    let request: ReturnType<HttpTestingController['expectOne']> | undefined;
+    await vi.waitFor(() => {
+      request = http.expectOne('/api/audio-extractions/notification-streams');
     });
     return request!;
   }

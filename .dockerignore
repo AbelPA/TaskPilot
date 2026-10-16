@@ -1,6 +1,9 @@
 .git/
+.dockerignore
+Dockerfile*
 .env
 .env.*
+*.log*
 **/node_modules/
 **/bin/
 **/obj/

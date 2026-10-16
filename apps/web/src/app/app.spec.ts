@@ -4,7 +4,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { App } from './app';
 import { routes } from './app.routes';
-import { AUDIO_EXTRACTION_HUB_CONNECTION_FACTORY } from './features/audio-extraction/notifications/audio-extraction-notification.service';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 describe('App', () => {
@@ -15,17 +14,6 @@ describe('App', () => {
         provideRouter(routes),
         provideHttpClient(),
         provideHttpClientTesting(),
-        {
-          provide: AUDIO_EXTRACTION_HUB_CONNECTION_FACTORY,
-          useValue: () => ({
-            start: async () => undefined,
-            invoke: async () => undefined,
-            on: () => undefined,
-            onreconnecting: () => undefined,
-            onreconnected: () => undefined,
-            onclose: () => undefined,
-          }),
-        },
       ],
     }).compileComponents();
   });

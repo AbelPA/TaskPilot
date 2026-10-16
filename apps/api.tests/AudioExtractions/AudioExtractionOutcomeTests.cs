@@ -16,7 +16,7 @@ public sealed class AudioExtractionOutcomeTests
     private const string RequestId = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     [Fact]
-    public async Task Completion_is_committed_before_group_notification()
+    public async Task Completion_is_committed_before_stream_notification()
     {
         await using var fixture = await Fixture.CreateAsync();
         var publisher = new RecordingPublisher(async notification =>

@@ -1,5 +1,8 @@
 using System.Data.Common;
+using System.Text.Json;
+using System.Threading.Channels;
 using Api.AudioExtractions.Contracts;
+using Api.AudioExtractions.Notifications;
 using Api.AudioExtractions.Services;
 using Api.AudioExtractions.YouTube;
 using Microsoft.AspNetCore.Mvc;
@@ -37,8 +40,186 @@ public static class AudioExtractionEndpoints
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
             .WithTags("Audio extractions");
 
+        endpoints.MapPost(
+                "/api/audio-extractions/notification-streams",
+                RegisterNotificationStreamAsync)
+            .WithName("RegisterAudioExtractionNotificationStream")
+            .Accepts<RegisterAudioExtractionNotificationStreamRequest>("application/json")
+            .Produces<RegisteredAudioExtractionNotificationStream>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithTags("Audio extractions");
+
+        endpoints.MapGet(
+                "/api/audio-extractions/notification-streams/{streamTicket}/events",
+                OpenNotificationStreamAsync)
+            .WithName("GetAudioExtractionNotificationStream")
+            .Produces(StatusCodes.Status200OK, contentType: "text/event-stream")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithTags("Audio extractions");
+
         return endpoints;
     }
+
+    private static async Task<IResult> RegisterNotificationStreamAsync(
+        [FromBody] RegisterAudioExtractionNotificationStreamRequest? request,
+        HttpContext httpContext,
+        AudioExtractionOutcomeService outcomeService,
+        AudioExtractionNotificationStreamRegistry registry,
+        CancellationToken cancellationToken)
+    {
+        httpContext.Response.Headers.CacheControl = "no-store";
+        if (request?.RequestIds is not { Count: > 0 })
+        {
+            return Problem(
+                StatusCodes.Status400BadRequest,
+                "Invalid notification stream request",
+                "Informe ao menos uma solicitação válida.",
+                "INVALID_NOTIFICATION_STREAM_REQUEST");
+        }
+
+        if (request.RequestIds.Any(string.IsNullOrEmpty))
+        {
+            return AudioExtractionNotFound();
+        }
+
+        var requestIds = request.RequestIds.Distinct(StringComparer.Ordinal).ToArray();
+        foreach (var requestId in requestIds)
+        {
+            if (await outcomeService.GetStatusAsync(requestId, cancellationToken) is null)
+            {
+                return AudioExtractionNotFound();
+            }
+        }
+
+        var ticket = registry.Register(requestIds);
+        var streamUrl = $"/api/audio-extractions/notification-streams/{ticket}/events";
+        return Results.Created(streamUrl, new RegisteredAudioExtractionNotificationStream(streamUrl));
+    }
+
+    private static async Task<IResult> OpenNotificationStreamAsync(
+        string streamTicket,
+        HttpContext httpContext,
+        AudioExtractionOutcomeService outcomeService,
+        AudioExtractionNotificationStreamRegistry registry,
+        TimeProvider timeProvider,
+        CancellationToken cancellationToken)
+    {
+        httpContext.Response.Headers.CacheControl = "no-store";
+        httpContext.Response.Headers["Referrer-Policy"] = "no-referrer";
+        if (!registry.TryGetRequestIds(streamTicket, out var requestIds))
+        {
+            return AudioExtractionNotFound();
+        }
+
+        using var subscription = registry.Subscribe(streamTicket);
+        if (subscription is null)
+        {
+            return AudioExtractionNotFound();
+        }
+
+        var initialStatuses = new List<AudioExtractionStatusResponse>(requestIds.Count);
+        foreach (var requestId in requestIds)
+        {
+            var status = await outcomeService.GetStatusAsync(requestId, cancellationToken);
+            if (status is null)
+            {
+                registry.Remove(streamTicket);
+                return AudioExtractionNotFound();
+            }
+
+            initialStatuses.Add(status);
+        }
+
+        var pendingRequestIds = requestIds.ToHashSet(StringComparer.Ordinal);
+        httpContext.Response.StatusCode = StatusCodes.Status200OK;
+        httpContext.Response.ContentType = "text/event-stream";
+        httpContext.Response.Headers.CacheControl = "no-store";
+        httpContext.Response.Headers["Referrer-Policy"] = "no-referrer";
+        httpContext.Response.Headers["X-Accel-Buffering"] = "no";
+        await httpContext.Response.StartAsync(cancellationToken);
+        await httpContext.Response.WriteAsync("retry: 3000\n\n", cancellationToken);
+        await httpContext.Response.Body.FlushAsync(cancellationToken);
+
+        foreach (var status in initialStatuses)
+        {
+            if (IsTerminal(status.Status))
+            {
+                await WriteOutcomeAsync(httpContext, status, cancellationToken);
+                pendingRequestIds.Remove(status.RequestId);
+            }
+        }
+
+        var lastHeartbeat = timeProvider.GetTimestamp();
+        while (pendingRequestIds.Count > 0)
+        {
+            var remainingUntilHeartbeat =
+                TimeSpan.FromSeconds(15) - timeProvider.GetElapsedTime(lastHeartbeat);
+            if (remainingUntilHeartbeat <= TimeSpan.Zero)
+            {
+                if (!registry.TryGetRequestIds(streamTicket, out _))
+                {
+                    break;
+                }
+
+                await WriteHeartbeatAsync(httpContext, cancellationToken);
+                lastHeartbeat = timeProvider.GetTimestamp();
+                continue;
+            }
+
+            using var heartbeatCancellation =
+                CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            heartbeatCancellation.CancelAfter(remainingUntilHeartbeat);
+            try
+            {
+                var notification = await subscription.Reader.ReadAsync(heartbeatCancellation.Token);
+                if (pendingRequestIds.Remove(notification.RequestId))
+                {
+                    await WriteOutcomeAsync(httpContext, notification, cancellationToken);
+                }
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                if (!registry.TryGetRequestIds(streamTicket, out _))
+                {
+                    break;
+                }
+
+                await WriteHeartbeatAsync(httpContext, cancellationToken);
+                lastHeartbeat = timeProvider.GetTimestamp();
+            }
+            catch (ChannelClosedException)
+            {
+                break;
+            }
+        }
+
+        return Results.Empty;
+    }
+
+    private static async Task WriteHeartbeatAsync(
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        await httpContext.Response.WriteAsync(
+            "event: heartbeat\ndata: {}\n\n",
+            cancellationToken);
+        await httpContext.Response.Body.FlushAsync(cancellationToken);
+    }
+
+    private static async Task WriteOutcomeAsync(
+        HttpContext httpContext,
+        AudioExtractionStatusResponse status,
+        CancellationToken cancellationToken)
+    {
+        var data = JsonSerializer.Serialize(status, JsonSerializerOptions.Web);
+        await httpContext.Response.WriteAsync(
+            $"event: extractionUpdated\ndata: {data}\n\n",
+            cancellationToken);
+        await httpContext.Response.Body.FlushAsync(cancellationToken);
+    }
+
+    private static bool IsTerminal(string status) => status is "completed" or "failed";
 
     private static async Task<IResult> GetAudioResultAsync(
         string requestId,
@@ -82,11 +263,7 @@ public static class AudioExtractionEndpoints
         httpContext.Response.Headers.CacheControl = "no-store";
         var status = await service.GetStatusAsync(requestId, cancellationToken);
         return status is null
-            ? Problem(
-                StatusCodes.Status404NotFound,
-                "Audio extraction not found",
-                "A solicitação não foi encontrada.",
-                "AUDIO_EXTRACTION_NOT_FOUND")
+            ? AudioExtractionNotFound()
             : Results.Ok(status);
     }
 
@@ -189,4 +366,15 @@ public static class AudioExtractionEndpoints
             title: title,
             detail: detail,
             extensions: new Dictionary<string, object?> { ["code"] = code });
+
+    private static IResult AudioExtractionNotFound() =>
+        Problem(
+            StatusCodes.Status404NotFound,
+            "Audio extraction not found",
+            "A solicitação não foi encontrada.",
+            "AUDIO_EXTRACTION_NOT_FOUND");
 }
+
+public sealed record RegisterAudioExtractionNotificationStreamRequest(IReadOnlyList<string>? RequestIds);
+
+public sealed record RegisteredAudioExtractionNotificationStream(string StreamUrl);

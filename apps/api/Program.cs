@@ -1,14 +1,14 @@
 using Api.AudioExtractions.Configuration;
 using Api.AudioExtractions.Endpoints;
 using Api.AudioExtractions.Messaging;
-using Api.AudioExtractions.Notifications;
 using Api.Grammar.Configuration;
 using Api.Grammar.Endpoints;
 using Api.Grammar.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Warning);
+// Hosting request logs include the bearer ticket embedded in the SSE route.
+builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -39,7 +39,6 @@ app.MapGet(
     .WithName("Health");
 app.MapAudioExtractionEndpoints();
 app.MapGrammarEndpoints();
-app.MapHub<AudioExtractionsHub>("/hubs/audio-extractions");
 
 if (app.Configuration.GetValue("AudioExtraction:ApplyMigrationsOnStartup", true))
 {
