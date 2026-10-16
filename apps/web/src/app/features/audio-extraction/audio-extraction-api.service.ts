@@ -26,6 +26,10 @@ export interface AudioExtractionStatus {
   } | null;
 }
 
+export interface AudioExtractionNotificationStreamRegistration {
+  streamUrl: string;
+}
+
 interface RetryState {
   fingerprint: string;
   idempotencyKey: string;
@@ -79,6 +83,15 @@ export class AudioExtractionApiService {
   getStatus(requestId: string): Observable<AudioExtractionStatus> {
     return this.http.get<AudioExtractionStatus>(
       `/api/audio-extractions/${encodeURIComponent(requestId)}`,
+    );
+  }
+
+  registerNotificationStream(
+    requestIds: string[],
+  ): Observable<AudioExtractionNotificationStreamRegistration> {
+    return this.http.post<AudioExtractionNotificationStreamRegistration>(
+      '/api/audio-extractions/notification-streams',
+      { requestIds },
     );
   }
 

@@ -1,7 +1,5 @@
-using System.Reflection;
 using Api.AudioExtractions.Contracts;
 using Api.AudioExtractions.Notifications;
-using Microsoft.AspNetCore.SignalR;
 using Xunit;
 
 namespace AudioApi.Tests.AudioExtractions;
@@ -9,110 +7,54 @@ namespace AudioApi.Tests.AudioExtractions;
 public sealed class AudioExtractionNotificationPublisherTests
 {
     [Fact]
-    public async Task Publisher_sends_only_to_the_hashed_request_group()
+    public void Registry_issues_unpredictable_short_lived_tickets()
     {
-        const string requestId = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-        var context = DispatchProxy.Create<IHubContext<AudioExtractionsHub>, RecordingHubContext>();
-        var recorder = (RecordingHubContext)(object)context;
-        var publisher = new AudioExtractionNotificationPublisher(context);
+        var timeProvider = new TestTimeProvider(DateTimeOffset.UtcNow);
+        var registry = new AudioExtractionNotificationStreamRegistry(timeProvider);
+        var ticket = registry.Register(["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"]);
+
+        Assert.Equal(43, ticket.Length);
+        Assert.True(registry.TryGetRequestIds(ticket, out _));
+        timeProvider.Advance(TimeSpan.FromMinutes(30));
+        Assert.False(registry.TryGetRequestIds(ticket, out _));
+    }
+
+    [Fact]
+    public async Task Publisher_notifies_only_subscribers_with_the_matching_request_capability()
+    {
+        const string firstRequestId = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+        const string secondRequestId = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
+        var registry = new AudioExtractionNotificationStreamRegistry(TimeProvider.System);
+        var firstTicket = registry.Register([firstRequestId]);
+        var secondTicket = registry.Register([secondRequestId]);
+        using var firstSubscription = registry.Subscribe(firstTicket);
+        using var secondSubscription = registry.Subscribe(secondTicket);
+        var publisher = new AudioExtractionNotificationPublisher(registry);
         var notification = new AudioExtractionStatusResponse(
-            requestId,
+            firstRequestId,
             "completed",
             "A extração de áudio solicitada foi concluída.",
             DateTimeOffset.UtcNow,
             new AudioExtractionResultResponse(
-                $"/api/audio-extractions/{requestId}/audio",
+                $"/api/audio-extractions/{firstRequestId}/audio",
                 30,
                 "audio/mpeg"));
 
         await publisher.PublishAsync(notification, CancellationToken.None);
 
-        Assert.Equal(AudioExtractionsHub.GetGroupName(requestId), recorder.ClientsProxy.GroupName);
-        Assert.DoesNotContain(requestId, recorder.ClientsProxy.GroupName);
-        Assert.Equal("extractionUpdated", recorder.ClientsProxy.ClientProxy.MethodName);
-        Assert.Same(notification, recorder.ClientsProxy.ClientProxy.Arguments![0]);
+        Assert.NotNull(firstSubscription);
+        Assert.NotNull(secondSubscription);
+        Assert.True(firstSubscription.Reader.TryRead(out var delivered));
+        Assert.Same(notification, delivered);
+        Assert.False(secondSubscription.Reader.TryRead(out _));
     }
 
-    public class RecordingHubContext : DispatchProxy
+    private sealed class TestTimeProvider(DateTimeOffset now) : TimeProvider
     {
-        public RecordingHubClients ClientsProxy { get; } = new();
+        private DateTimeOffset current = now;
 
-        protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
-        {
-            return targetMethod?.Name switch
-            {
-                "get_Clients" => ClientsProxy.Proxy,
-                "get_Groups" => DispatchProxy.Create<IGroupManager, EmptyGroupManager>(),
-                _ => throw new NotSupportedException(targetMethod?.Name),
-            };
-        }
-    }
+        public override DateTimeOffset GetUtcNow() => current;
 
-    public class RecordingHubClients
-    {
-        public string? GroupName { get; private set; }
-        public RecordingClientProxy ClientProxy { get; } = new();
-        public IHubClients Proxy { get; }
-
-        public RecordingHubClients()
-        {
-            Proxy = DispatchProxy.Create<IHubClients, RecordingHubClientsProxy>();
-            ((RecordingHubClientsProxy)(object)Proxy).Owner = this;
-        }
-
-        public IClientProxy Group(string name)
-        {
-            GroupName = name;
-            return ClientProxy.Proxy;
-        }
-    }
-
-    public class RecordingHubClientsProxy : DispatchProxy
-    {
-        public RecordingHubClients Owner { get; set; } = null!;
-
-        protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) =>
-            targetMethod?.Name == "Group"
-                ? Owner.Group((string)args![0]!)
-                : throw new NotSupportedException(targetMethod?.Name);
-    }
-
-    public class RecordingClientProxy
-    {
-        public string? MethodName { get; private set; }
-        public object?[]? Arguments { get; private set; }
-        public IClientProxy Proxy { get; } =
-            DispatchProxy.Create<IClientProxy, RecordingClientProxyProxy>();
-
-        public RecordingClientProxy()
-        {
-            ((RecordingClientProxyProxy)(object)Proxy).Owner = this;
-        }
-
-        public Task SendCoreAsync(string method, object?[] arguments, CancellationToken cancellationToken)
-        {
-            MethodName = method;
-            Arguments = arguments;
-            return Task.CompletedTask;
-        }
-    }
-
-    public class RecordingClientProxyProxy : DispatchProxy
-    {
-        public RecordingClientProxy Owner { get; set; } = null!;
-
-        protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) =>
-            targetMethod?.Name == "SendCoreAsync"
-                ? Owner.SendCoreAsync(
-                    (string)args![0]!,
-                    (object?[])args[1]!,
-                    (CancellationToken)args[2]!)
-                : throw new NotSupportedException(targetMethod?.Name);
-    }
-
-    public class EmptyGroupManager : DispatchProxy
-    {
-        protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) =>
-            throw new NotSupportedException(targetMethod?.Name);
+        public void Advance(TimeSpan duration) => current = current.Add(duration);
     }
 }

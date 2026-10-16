@@ -4,28 +4,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { App } from './app';
 import { routes } from './app.routes';
-import { AUDIO_EXTRACTION_HUB_CONNECTION_FACTORY } from './features/audio-extraction/notifications/audio-extraction-notification.service';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [
-        provideRouter(routes),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        {
-          provide: AUDIO_EXTRACTION_HUB_CONNECTION_FACTORY,
-          useValue: () => ({
-            start: async () => undefined,
-            invoke: async () => undefined,
-            on: () => undefined,
-            onreconnecting: () => undefined,
-            onreconnected: () => undefined,
-            onclose: () => undefined,
-          }),
-        },
-      ],
+      providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
   });
 

@@ -31,7 +31,11 @@ public static class AudioExtractionServiceRegistration
         services.AddOpenTelemetry()
             .ConfigureResource(resource => resource.AddService(serviceName: "taskpilot-api"))
             .WithTracing(tracing => tracing
-                .AddAspNetCoreInstrumentation()
+                .AddAspNetCoreInstrumentation(options =>
+                    options.Filter = context =>
+                        !context.Request.Path.StartsWithSegments(
+                            "/api/audio-extractions/",
+                            StringComparison.OrdinalIgnoreCase))
                 .AddHttpClientInstrumentation()
                 .AddSource("TaskPilot.AudioExtraction")
                 .AddOtlpExporter(options =>
@@ -95,7 +99,6 @@ public static class AudioExtractionServiceRegistration
         }
 
         services.AddDbContext<AudioExtractionDbContext>(options => options.UseNpgsql(connectionString));
-        services.AddSignalR();
         services.AddOptions<RabbitMqOptions>()
             .Bind(configuration.GetSection(RabbitMqOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.HostName))
@@ -119,6 +122,7 @@ public static class AudioExtractionServiceRegistration
         services.AddScoped<ExpiredExtractionCleanupService>();
         services.AddSingleton<IAudioObjectStore, MinioAudioObjectStore>();
         services.AddHostedService<ExpiredExtractionCleanupService>();
+        services.AddSingleton<AudioExtractionNotificationStreamRegistry>();
         services.AddSingleton<IAudioExtractionNotificationPublisher, AudioExtractionNotificationPublisher>();
         services.AddHostedService<AudioExtractionOutcomeConsumer>();
         services.AddRateLimiter(rateLimiter =>
