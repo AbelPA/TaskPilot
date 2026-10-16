@@ -2,6 +2,8 @@ using System.Net;
 using System.Text;
 using Api.AudioExtractions.Configuration;
 using Api.AudioExtractions.YouTube;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -70,15 +72,59 @@ public sealed class YouTubeVideoMetadataClientTests
         }
     }
 
+    [Fact]
+    public async Task Upstream_failure_logs_status_and_reason_without_key_or_message()
+    {
+        var logger = new CapturingLogger();
+        var client = CreateClient(
+            (_, _) => new HttpResponseMessage(HttpStatusCode.Forbidden)
+            {
+                Content = new StringContent(
+                    """{"error":{"code":403,"message":"secret details","errors":[{"reason":"quotaExceeded"}]}}""",
+                    Encoding.UTF8,
+                    "application/json"),
+            },
+            out var httpClient,
+            logger);
+        using (httpClient)
+        {
+            await Assert.ThrowsAsync<YouTubeMetadataUnavailableException>(() =>
+                client.GetVideoMetadataAsync("abcdefghijk", CancellationToken.None));
+        }
+
+        var entry = Assert.Single(logger.Entries);
+        Assert.Contains("403", entry);
+        Assert.Contains("quotaExceeded", entry);
+        Assert.DoesNotContain("test-api-key", entry);
+        Assert.DoesNotContain("secret details", entry);
+    }
+
+    private sealed class CapturingLogger : ILogger<YouTubeVideoMetadataClient>
+    {
+        public List<string> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter) => Entries.Add(formatter(state, exception));
+    }
+
     private static YouTubeVideoMetadataClient CreateClient(
         Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> responseFactory,
-        out HttpClient httpClient)
+        out HttpClient httpClient,
+        ILogger<YouTubeVideoMetadataClient>? logger = null)
     {
         httpClient = new HttpClient(new StubHandler(responseFactory));
         return new YouTubeVideoMetadataClient(httpClient, Options.Create(new AudioExtractionOptions
         {
             YouTubeApiKey = "test-api-key",
-        }));
+        }), logger ?? NullLogger<YouTubeVideoMetadataClient>.Instance);
     }
 
     private sealed class StubHandler(

@@ -1,9 +1,11 @@
 import asyncio
+import logging
 import re
 import sys
 from pathlib import Path
 
 
+logger = logging.getLogger(__name__)
 VIDEO_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{11}$")
 
 
@@ -62,6 +64,12 @@ async def download_video(
     if process.returncode != 0:
         if b"video unavailable" in stderr.lower():
             raise VideoUnavailableError("The requested video is unavailable.")
+        detail = stderr.decode("utf-8", errors="replace").strip().splitlines()
+        logger.warning(
+            "yt-dlp exited with code %s: %s",
+            process.returncode,
+            detail[-1][:300] if detail else "no output",
+        )
         raise VideoDownloadError("The video could not be downloaded.")
 
     files = [
