@@ -30,6 +30,7 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('nav')?.textContent).toContain('Extrair áudio');
     expect(compiled.querySelector('nav')?.textContent).toContain('Estudar gramática');
+    expect(compiled.querySelector('nav a[href="/settings"]')?.textContent).toContain('Configurações');
   });
 
   it('opens the first practice from the topic list in no more than three selections', async () => {

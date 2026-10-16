@@ -1,0 +1,130 @@
+.page {
+  width: min(44rem, calc(100% - 2rem));
+  margin: 3rem auto;
+}
+
+.page-heading {
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  color: #0f766e;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0.35rem 0;
+  color: #0f172a;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  letter-spacing: -0.04em;
+}
+
+.page-heading > p:last-child,
+.hint {
+  color: #475569;
+  line-height: 1.6;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.25rem;
+}
+
+.hint {
+  margin: 0;
+}
+
+.status {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.status.configured {
+  background: #f0fdfa;
+  color: #115e59;
+}
+
+label {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+input {
+  min-height: 2.75rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.7rem;
+  font: inherit;
+}
+
+input:focus-visible,
+button:focus-visible {
+  outline: 3px solid #0f766e;
+  outline-offset: 3px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid #0f766e;
+  border-radius: 0.7rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #0f766e;
+  color: #fff;
+}
+
+.secondary-button {
+  background: #fff;
+  color: #0f766e;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.notice {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #f1f5f9;
+}
+
+.error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.success {
+  background: #f0fdf4;
+  color: #166534;
+}

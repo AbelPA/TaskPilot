@@ -12,6 +12,26 @@ namespace AudioApi.Tests.AudioExtractions;
 public sealed class YouTubeVideoMetadataClientTests
 {
     [Fact]
+    public async Task Fails_as_unavailable_without_calling_youtube_when_no_key_is_configured()
+    {
+        var called = false;
+        var client = CreateClient(
+            (_, _) =>
+            {
+                called = true;
+                return new HttpResponseMessage(HttpStatusCode.OK);
+            },
+            out var httpClient,
+            apiKey: null);
+        using (httpClient)
+        {
+            await Assert.ThrowsAsync<YouTubeMetadataUnavailableException>(
+                () => client.GetVideoMetadataAsync("abcdefghijk", CancellationToken.None));
+            Assert.False(called);
+        }
+    }
+
+    [Fact]
     public async Task Requests_metadata_only_from_fixed_google_host_with_key_in_header()
     {
         HttpRequestMessage? capturedRequest = null;
@@ -118,13 +138,19 @@ public sealed class YouTubeVideoMetadataClientTests
     private static YouTubeVideoMetadataClient CreateClient(
         Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> responseFactory,
         out HttpClient httpClient,
-        ILogger<YouTubeVideoMetadataClient>? logger = null)
+        ILogger<YouTubeVideoMetadataClient>? logger = null,
+        string? apiKey = "test-api-key")
     {
         httpClient = new HttpClient(new StubHandler(responseFactory));
-        return new YouTubeVideoMetadataClient(httpClient, Options.Create(new AudioExtractionOptions
-        {
-            YouTubeApiKey = "test-api-key",
-        }), logger ?? NullLogger<YouTubeVideoMetadataClient>.Instance);
+        return new YouTubeVideoMetadataClient(
+            httpClient,
+            new StubApiKeyProvider(apiKey),
+            logger ?? NullLogger<YouTubeVideoMetadataClient>.Instance);
+    }
+
+    private sealed class StubApiKeyProvider(string? apiKey) : IYouTubeApiKeyProvider
+    {
+        public Task<string?> GetApiKeyAsync(CancellationToken cancellationToken) => Task.FromResult(apiKey);
     }
 
     private sealed class StubHandler(

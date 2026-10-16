@@ -20,6 +20,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/grammar/theory-page').then(module => module.TheoryPage),
   },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./features/settings/settings-page').then(module => module.SettingsPage),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'extract-audio' },
   { path: '**', redirectTo: 'extract-audio' },
 ];

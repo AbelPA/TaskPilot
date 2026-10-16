@@ -4,13 +4,6 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
-if [ -z "${YOUTUBE_DATA_API_KEY:-}" ] ||
-  [ "$YOUTUBE_DATA_API_KEY" = "replace-with-a-youtube-data-api-key" ]; then
-  printf 'Erro: defina YOUTUBE_DATA_API_KEY no ambiente do shell antes de iniciar a aplicação.\n' >&2
-  printf "Exemplo: export YOUTUBE_DATA_API_KEY='sua-chave'; ./scripts/start-local.sh\n" >&2
-  exit 1
-fi
-
 if ! command -v docker >/dev/null 2>&1; then
   printf 'Erro: Docker não está instalado ou não está disponível no PATH.\n' >&2
   exit 1
@@ -61,6 +54,15 @@ fi
 if [ ! -f "$ROOT_DIR/.env" ]; then
   cp "$ROOT_DIR/.env.example" "$ROOT_DIR/.env"
   printf 'Criado .env a partir de .env.example.\n'
+fi
+
+if ! grep -Eq '^SETTINGS_ENCRYPTION_KEY=.+' "$ROOT_DIR/.env"; then
+  if ! command -v openssl >/dev/null 2>&1; then
+    printf 'Erro: openssl é necessário para gerar SETTINGS_ENCRYPTION_KEY no .env.\n' >&2
+    exit 1
+  fi
+  printf '\nSETTINGS_ENCRYPTION_KEY=%s\n' "$(openssl rand -base64 32)" >>"$ROOT_DIR/.env"
+  printf 'Gerada SETTINGS_ENCRYPTION_KEY no .env (protege as configurações salvas no banco).\n'
 fi
 
 cd "$ROOT_DIR"

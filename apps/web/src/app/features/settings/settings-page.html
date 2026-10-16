@@ -1,0 +1,57 @@
+<section class="page" aria-labelledby="page-title">
+  <header class="page-heading">
+    <p class="eyebrow">Preferências</p>
+    <h1 id="page-title">Configurações</h1>
+    <p>Gerencie as credenciais usadas pelos recursos da aplicação.</p>
+  </header>
+
+  @if (loading()) {
+    <p role="status">Carregando configurações…</p>
+  } @else if (!status()) {
+    <p class="notice error" role="alert">{{ errorMessage() }}</p>
+    <button type="button" class="primary-button" (click)="loadStatus()">Tentar novamente</button>
+  } @else {
+    <form class="card" (ngSubmit)="save()" #form="ngForm" autocomplete="off">
+      <h2>YouTube Data API</h2>
+      <p class="hint">
+        Necessária para validar a duração dos vídeos antes da extração de áudio. O valor é
+        criptografado antes de ser salvo e nunca é exibido novamente.
+      </p>
+
+      <p class="status" [class.configured]="status()!.configured" role="status">
+        {{ describeSource(status()!) }}
+      </p>
+
+      <label for="youtube-api-key">Chave de API (YOUTUBE_DATA_API_KEY)</label>
+      <input
+        id="youtube-api-key"
+        name="apiKey"
+        type="password"
+        autocomplete="off"
+        spellcheck="false"
+        maxlength="256"
+        placeholder="Cole a nova chave aqui"
+        [(ngModel)]="apiKey"
+        required
+      />
+
+      @if (errorMessage()) {
+        <p class="notice error" role="alert">{{ errorMessage() }}</p>
+      }
+      @if (successMessage()) {
+        <p class="notice success" role="status">{{ successMessage() }}</p>
+      }
+
+      <div class="actions">
+        <button type="submit" class="primary-button" [disabled]="saving() || !apiKey.trim()">
+          {{ saving() ? 'Salvando…' : status()!.source === 'database' ? 'Substituir chave' : 'Salvar chave' }}
+        </button>
+        @if (status()!.source === 'database') {
+          <button type="button" class="secondary-button" [disabled]="saving()" (click)="remove()">
+            Remover chave salva
+          </button>
+        }
+      </div>
+    </form>
+  }
+</section>

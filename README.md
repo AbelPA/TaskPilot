@@ -36,8 +36,11 @@ From the repository root, run:
 
 The script starts Docker if needed, creates `.env` from `.env.example` if it
 does not exist, and builds and starts the complete Docker Compose stack.
-Export `YOUTUBE_DATA_API_KEY` in your shell before running the script; it is
-read from the process environment and is not stored in `.env`. The web app is
+Open the **Configurações** screen (<http://localhost:4200/settings>) and save the
+YouTube Data API key there; it is stored encrypted (AES-256-GCM) in the database
+using `SETTINGS_ENCRYPTION_KEY`, which the script generates in `.env`. Keep that
+value: without it, saved keys cannot be decrypted. The Settings endpoints have no authentication, so expose them
+only on a trusted local environment. The web app is
 available at <http://localhost:4200>; RabbitMQ management is at
 <http://localhost:15672>; the local Grafana/OTel LGTM dashboard is at
 <http://localhost:3000>. SeaweedFS provides the local S3 API at
@@ -54,13 +57,3 @@ identifier. Prometheus metrics include HTTP request duration/counts and the
 worker's `audio_worker.processed` and `audio_worker.processing.duration`
 instruments. See [the distributed observability quickstart](specs/003-distributed-observability-poc/quickstart.md)
 for the end-to-end steps and troubleshooting.
-
-On macOS, enter the key without echoing it or saving it in shell history:
-
-```bash
-printf 'YouTube Data API key: '
-read -r -s YOUTUBE_DATA_API_KEY
-printf '\n'
-export YOUTUBE_DATA_API_KEY
-./scripts/start-local.sh
-```

@@ -85,8 +85,6 @@ public static class AudioExtractionServiceRegistration
             .Validate(options => !string.IsNullOrWhiteSpace(options.StorageSecretKey))
             .Validate(options => !string.IsNullOrWhiteSpace(options.StorageBucket))
             .Validate(options => options.SignedUrlTtlSeconds is > 0 and <= 900)
-            .Validate(options => !string.IsNullOrWhiteSpace(options.YouTubeApiKey),
-                "AudioExtraction:YouTubeApiKey must be configured.")
             .ValidateOnStart();
         services.Configure<ForwardedHeadersOptions>(options =>
         {
