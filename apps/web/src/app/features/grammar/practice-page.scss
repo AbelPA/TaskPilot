@@ -1,0 +1,172 @@
+.page {
+  width: min(58rem, calc(100% - 2rem));
+  margin: 2rem auto 4rem;
+  color: #0f172a;
+}
+
+.back-link {
+  color: #0f766e;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #0f766e;
+  outline-offset: 3px;
+}
+
+.page-heading {
+  margin: 2rem 0;
+}
+
+.eyebrow {
+  color: #0f766e;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+h1 {
+  margin: 0.4rem 0;
+  font-size: clamp(1.8rem, 5vw, 2.75rem);
+  letter-spacing: -0.04em;
+}
+
+.page-heading > p:last-child {
+  color: #475569;
+}
+
+.exercise-text {
+  padding: clamp(1rem, 4vw, 1.8rem);
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  font-size: 1.1rem;
+  line-height: 2.6;
+  white-space: pre-wrap;
+}
+
+.inline-answer {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  vertical-align: baseline;
+}
+
+input,
+select {
+  min-height: 2.4rem;
+  max-width: 13rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid #94a3b8;
+  border-radius: 0.4rem;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  line-height: 1.2;
+}
+
+.inline-result {
+  display: inline-block;
+  color: #991b1b;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.inline-result.correct {
+  color: #166534;
+}
+
+.question-list {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+fieldset {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+legend {
+  padding: 0 0.4rem;
+  font-weight: 800;
+}
+
+.result-panel,
+.notice {
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background: #f1f5f9;
+}
+
+.result-panel h2 {
+  margin-top: 0;
+  font-size: 1.25rem;
+}
+
+.result-list {
+  display: grid;
+  gap: 0.75rem;
+  padding-left: 1.4rem;
+  line-height: 1.6;
+}
+
+.error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.7rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-button {
+  border: 1px solid #0f766e;
+  background: #0f766e;
+  color: #fff;
+}
+
+.secondary-button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
