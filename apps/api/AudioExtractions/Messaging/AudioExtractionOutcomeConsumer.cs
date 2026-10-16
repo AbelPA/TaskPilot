@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using Api.AudioExtractions.Configuration;
@@ -91,6 +92,14 @@ public sealed class AudioExtractionOutcomeConsumer(
 
             try
             {
+                var traceParent = GetTraceParent(delivery.BasicProperties);
+                if (!string.IsNullOrWhiteSpace(traceParent))
+                {
+                    logger.LogInformation(
+                        "Processing audio outcome with trace {TraceId}.",
+                        traceParent.Split('-')[1]);
+                }
+
                 await using var scope = scopeFactory.CreateAsyncScope();
                 var service = scope.ServiceProvider.GetRequiredService<AudioExtractionOutcomeService>();
                 var outcome = message switch
@@ -185,6 +194,26 @@ public sealed class AudioExtractionOutcomeConsumer(
                 EnsureUniqueProperties(item);
             }
         }
+    }
+
+    private static string? GetTraceParent(IReadOnlyBasicProperties? properties)
+    {
+        if (properties?.Headers is null)
+        {
+            return null;
+        }
+
+        if (properties.Headers.TryGetValue("traceparent", out var value) && value is byte[] bytes)
+        {
+            return Encoding.UTF8.GetString(bytes);
+        }
+
+        if (properties.Headers.TryGetValue("traceparent", out var text) && text is string textValue)
+        {
+            return textValue;
+        }
+
+        return null;
     }
 
     private static async Task DeadLetterAsync(

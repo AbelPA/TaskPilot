@@ -39,10 +39,21 @@ does not exist, and builds and starts the complete Docker Compose stack.
 Export `YOUTUBE_DATA_API_KEY` in your shell before running the script; it is
 read from the process environment and is not stored in `.env`. The web app is
 available at <http://localhost:4200>; RabbitMQ management is at
-<http://localhost:15672>. SeaweedFS provides the local S3 API at
+<http://localhost:15672>; the local Grafana/OTel LGTM dashboard is at
+<http://localhost:3000>. SeaweedFS provides the local S3 API at
 <http://localhost:8333> and the filer console at <http://localhost:8888>.
-Use `docker compose logs --follow` to view service output and
-`docker compose down` to stop the services.
+The startup script stays open and prints log lines matching common error indicators;
+press `Ctrl+C` to stop monitoring without stopping the containers. To view all
+service output, use `docker compose logs --follow`; stop the services with
+`docker compose down`. The browser exports spans to the local OTLP collector at
+`http://localhost:4319`, which forwards traces, logs, and metrics to the LGTM
+stack. The API and worker also export only through this collector. In Grafana
+Explore, use Tempo to find a trace by service and time window, then search Loki
+for log records using its `trace_id`; `requestId` remains a separate business
+identifier. Prometheus metrics include HTTP request duration/counts and the
+worker's `audio_worker.processed` and `audio_worker.processing.duration`
+instruments. See [the distributed observability quickstart](specs/003-distributed-observability-poc/quickstart.md)
+for the end-to-end steps and troubleshooting.
 
 On macOS, enter the key without echoing it or saving it in shell history:
 

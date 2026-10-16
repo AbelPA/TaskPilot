@@ -48,6 +48,8 @@ public sealed class AudioExtractionDbContext(DbContextOptions<AudioExtractionDbC
         outbox.ToTable("audio_extraction_outbox");
         outbox.HasKey(message => message.EventId);
         outbox.Property(message => message.EventType).HasMaxLength(80).IsRequired();
+        outbox.Property(message => message.TraceParent).HasMaxLength(256);
+        outbox.Property(message => message.TraceState).HasMaxLength(512);
         outbox.Property(message => message.PayloadJson).HasColumnType("jsonb").IsRequired();
         outbox.Property(message => message.State).HasMaxLength(16).IsRequired();
         outbox.HasIndex(message => new { message.State, message.NextAttemptAt })

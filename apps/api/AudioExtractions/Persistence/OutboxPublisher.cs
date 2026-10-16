@@ -1,6 +1,8 @@
 using System.Data.Common;
+using System.Diagnostics;
 using Api.AudioExtractions.Configuration;
 using Api.AudioExtractions.Messaging;
+using Api.AudioExtractions.Observability;
 using Api.AudioExtractions.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -18,8 +20,11 @@ public interface IOutboxMessagePublisher
 public sealed class RabbitMqOutboxMessagePublisher(
     IOptions<RabbitMqOptions> options) : IOutboxMessagePublisher
 {
+    private static readonly ActivitySource ActivitySource = new("TaskPilot.AudioExtraction");
+
     public async Task PublishAsync(OutboxMessageEntity message, CancellationToken cancellationToken)
     {
+        using var publishActivity = StartPublishActivity(message);
         var settings = options.Value;
         var factory = new ConnectionFactory
         {
@@ -40,6 +45,7 @@ public sealed class RabbitMqOutboxMessagePublisher(
             MessageId = message.EventId.ToString("D"),
             Type = message.EventType,
             ContentType = "application/json",
+            Headers = GetTraceHeaders(message),
         };
         var payload = System.Text.Encoding.UTF8.GetBytes(message.PayloadJson);
         await channel.BasicPublishAsync(
@@ -49,6 +55,43 @@ public sealed class RabbitMqOutboxMessagePublisher(
             properties,
             payload,
             cancellationToken);
+    }
+
+    internal static Activity? StartPublishActivity(OutboxMessageEntity message)
+    {
+        ActivityContext? parentContext = null;
+        if (!string.IsNullOrWhiteSpace(message.TraceParent) &&
+            ActivityContext.TryParse(message.TraceParent, message.TraceState, out var parsedContext))
+        {
+            parentContext = parsedContext;
+        }
+
+        var activity = ActivitySource.StartActivity(
+            "audio_extraction.publish",
+            ActivityKind.Producer,
+            parentContext ?? default);
+        activity?.SetTag("messaging.system", "rabbitmq");
+        activity?.SetTag("messaging.destination.name", RabbitMqTopology.Exchange);
+        activity?.SetTag("messaging.operation.type", "publish");
+        return activity;
+    }
+
+    internal static IDictionary<string, object?>? GetTraceHeaders(OutboxMessageEntity message)
+    {
+        var headers = new Dictionary<string, object?>();
+        var traceParent = TraceContext.GetCurrentTraceParent() ?? message.TraceParent;
+        var traceState = Activity.Current?.TraceStateString ?? message.TraceState;
+        if (!string.IsNullOrWhiteSpace(traceParent) &&
+            ActivityContext.TryParse(traceParent, traceState, out _))
+        {
+            headers["traceparent"] = traceParent;
+            if (!string.IsNullOrWhiteSpace(traceState))
+            {
+                headers["tracestate"] = traceState;
+            }
+        }
+
+        return headers.Count == 0 ? null : headers;
     }
 }
 
@@ -79,12 +122,16 @@ public sealed class OutboxPublisher(
             }
             catch (NpgsqlException exception)
             {
-                logger.LogError(exception, "Outbox database operation failed; pending messages are retained.");
+                logger.LogError(
+                    "Outbox database operation failed ({ExceptionType}); pending messages are retained.",
+                    exception.GetType().Name);
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
             catch (DbException exception)
             {
-                logger.LogError(exception, "Outbox database operation failed; pending messages are retained.");
+                logger.LogError(
+                    "Outbox database operation failed ({ExceptionType}); pending messages are retained.",
+                    exception.GetType().Name);
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
@@ -137,16 +184,16 @@ public sealed class OutboxPublisher(
                 if (message.AttemptCount >= SlowRetryThreshold)
                 {
                     logger.LogError(
-                        exception,
-                        "Outbox delivery remains pending after {AttemptCount} attempts; message is retained for slower retry.",
-                        message.AttemptCount);
+                        "Outbox delivery remains pending after {AttemptCount} attempts ({ExceptionType}); message is retained for slower retry.",
+                        message.AttemptCount,
+                        exception.GetType().Name);
                 }
                 else
                 {
                     logger.LogWarning(
-                        exception,
-                        "Outbox delivery attempt {AttemptCount} failed; message remains pending.",
-                        message.AttemptCount);
+                        "Outbox delivery attempt {AttemptCount} failed ({ExceptionType}); message remains pending.",
+                        message.AttemptCount,
+                        exception.GetType().Name);
                 }
             }
         }
@@ -160,4 +207,26 @@ public sealed class OutboxPublisher(
         attemptCount >= SlowRetryThreshold
             ? TimeSpan.FromMinutes(30)
             : TimeSpan.FromSeconds(Math.Min(1 << Math.Min(attemptCount, 6), 60));
+
+    private static IDictionary<string, object?>? GetTraceHeaders(OutboxMessageEntity message)
+    {
+        var headers = new Dictionary<string, object?>();
+        var assignedTraceParent = !string.IsNullOrWhiteSpace(message.TraceParent)
+            ? message.TraceParent
+            : TraceContext.GetCurrentTraceParent();
+        if (!string.IsNullOrWhiteSpace(assignedTraceParent))
+        {
+            headers["traceparent"] = assignedTraceParent;
+        }
+
+        var assignedTraceState = !string.IsNullOrWhiteSpace(message.TraceState)
+            ? message.TraceState
+            : Activity.Current?.TraceStateString;
+        if (!string.IsNullOrWhiteSpace(assignedTraceState))
+        {
+            headers["tracestate"] = assignedTraceState;
+        }
+
+        return headers.Count == 0 ? null : headers;
+    }
 }

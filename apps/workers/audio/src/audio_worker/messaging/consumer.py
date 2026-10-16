@@ -3,13 +3,17 @@ import json
 import logging
 import os
 import re
+from time import perf_counter
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import aio_pika
+from opentelemetry import trace
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
+
+from audio_worker.observability import log_trace_context, record_processing, start_consumer_span
 
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{43}$")
@@ -113,55 +117,78 @@ async def consume_requests(
     service: Any,
 ) -> None:
     async def handle(message: aio_pika.IncomingMessage) -> None:
-        try:
-            request = validate_requested_event(message.body)
-        except InvalidRequestMessage:
-            digest = hashlib.sha256(message.body).hexdigest()
-            poison = {
-                "failureCode": "MALFORMED_REQUEST",
-                "bodySha256": digest,
-                "routingKey": message.routing_key,
-            }
-            await dead_letter_exchange.publish(
-                aio_pika.Message(
-                    body=json.dumps(poison, separators=(",", ":")).encode(),
-                    content_type="application/json",
-                    delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
-                ),
-                routing_key="audio.extraction.requested.malformed",
-                mandatory=True,
-            )
-            await message.ack()
-            logger.warning("Malformed extraction event sent to the dead-letter queue.")
-            return
-
+        span = start_consumer_span(message.headers)
         retry_count = _retry_count(message.headers)
-        try:
-            await service.process(request)
-        except TransientProcessingError:
-            await _retry_or_fail(
-                message,
-                request,
-                retry_count,
-                exchange,
-                service,
-            )
-            return
-        except Exception as error:
-            logger.error(
-                "Unexpected extraction failure (%s); applying bounded retry policy.",
-                type(error).__name__,
-            )
-            await _retry_or_fail(
-                message,
-                request,
-                retry_count,
-                exchange,
-                service,
-            )
-            return
+        started_at = perf_counter()
+        outcome = "error"
+        with trace.use_span(span, end_on_exit=True):
+            try:
+                log_trace_context("Starting audio extraction request processing.")
+                try:
+                    request = validate_requested_event(message.body)
+                except InvalidRequestMessage:
+                    digest = hashlib.sha256(message.body).hexdigest()
+                    poison = {
+                        "failureCode": "MALFORMED_REQUEST",
+                        "bodySha256": digest,
+                        "routingKey": message.routing_key,
+                    }
+                    await dead_letter_exchange.publish(
+                        aio_pika.Message(
+                            body=json.dumps(poison, separators=(",", ":")).encode(),
+                            content_type="application/json",
+                            delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                        ),
+                        routing_key="audio.extraction.requested.malformed",
+                        mandatory=True,
+                    )
+                    await message.ack()
+                    outcome = "malformed"
+                    logger.warning("Malformed extraction event sent to the dead-letter queue.")
+                    return
 
-        await message.ack()
+                try:
+                    await service.process(request)
+                except TransientProcessingError as error:
+                    outcome = "retry" if retry_count < 3 else "failed"
+                    cause = error.__cause__
+                    logger.warning(
+                        "Transient extraction cause: %s (%s).",
+                        error,
+                        type(cause).__name__ if cause else "none",
+                    )
+                    await _retry_or_fail(
+                        message,
+                        request,
+                        retry_count,
+                        exchange,
+                        service,
+                    )
+                    return
+                except Exception as error:
+                    outcome = "retry" if retry_count < 3 else "failed"
+                    logger.error(
+                        "Unexpected extraction failure (%s); applying bounded retry policy.",
+                        type(error).__name__,
+                    )
+                    await _retry_or_fail(
+                        message,
+                        request,
+                        retry_count,
+                        exchange,
+                        service,
+                    )
+                    return
+
+                await message.ack()
+                outcome = "success"
+            finally:
+                span.set_attribute("audio_extraction.outcome", outcome)
+                if outcome == "success":
+                    span.set_status(trace.Status(trace.StatusCode.OK))
+                else:
+                    span.set_status(trace.Status(trace.StatusCode.ERROR))
+                record_processing(outcome, perf_counter() - started_at, retry_count)
 
     await queue.consume(handle, no_ack=False)
 

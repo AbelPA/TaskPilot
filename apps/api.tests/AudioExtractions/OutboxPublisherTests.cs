@@ -1,7 +1,11 @@
+using System.Diagnostics;
+using Api.AudioExtractions.Configuration;
 using Api.AudioExtractions.Persistence;
 using Api.AudioExtractions.Persistence.Entities;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -75,6 +79,84 @@ public sealed class OutboxPublisherTests
         Assert.Equal("published", message.State);
         Assert.Equal(1, message.AttemptCount);
         Assert.NotNull(message.PublishedAt);
+    }
+
+    [Fact]
+    public void RabbitMq_publish_span_continues_saved_w3c_context_and_propagates_its_child()
+    {
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == "TaskPilot.AudioExtraction",
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            SampleUsingParentId = (ref ActivityCreationOptions<string> _) => ActivitySamplingResult.AllDataAndRecorded,
+        };
+        ActivitySource.AddActivityListener(listener);
+        using var request = new Activity("http request").SetIdFormat(ActivityIdFormat.W3C).Start();
+        Assert.NotNull(request);
+        var message = new OutboxMessageEntity
+        {
+            EventId = Guid.NewGuid(),
+            RequestId = new string('a', 43),
+            EventType = "audio.extraction.requested",
+            SchemaVersion = 1,
+            OccurredAt = DateTimeOffset.UtcNow,
+            PayloadJson = "{}",
+            State = "pending",
+            NextAttemptAt = DateTimeOffset.UtcNow,
+            TraceParent = request!.Id,
+            TraceState = "vendor=value",
+        };
+
+        using var publish = RabbitMqOutboxMessagePublisher.StartPublishActivity(message);
+
+        Assert.NotNull(publish);
+        Assert.Equal(request.TraceId, publish.TraceId);
+        Assert.Equal(request.SpanId, publish.ParentSpanId);
+        var headers = RabbitMqOutboxMessagePublisher.GetTraceHeaders(message);
+        Assert.Equal(publish.Id, Assert.IsType<string>(headers!["traceparent"]));
+        Assert.Equal("vendor=value", Assert.IsType<string>(headers["tracestate"]));
+    }
+
+    [Fact]
+    public void Api_logging_includes_activity_trace_and_span_ids()
+    {
+        var services = new ServiceCollection();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:AudioExtraction"] = "Host=localhost;Database=test;Username=test;Password=test",
+                ["AudioExtraction:YouTubeApiKey"] = "test-key",
+                ["AudioExtraction:StorageEndpoint"] = "http://localhost:9000",
+                ["AudioExtraction:StorageAccessKey"] = "test-access",
+                ["AudioExtraction:StorageSecretKey"] = "test-secret",
+                ["AudioExtraction:StorageBucket"] = "test-bucket",
+            })
+            .Build();
+        services.AddAudioExtractions(configuration);
+        using var serviceProvider = services.BuildServiceProvider();
+        var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<LoggerFactoryOptions>>().Value;
+
+        Assert.True(options.ActivityTrackingOptions.HasFlag(ActivityTrackingOptions.TraceId));
+        Assert.True(options.ActivityTrackingOptions.HasFlag(ActivityTrackingOptions.SpanId));
+    }
+
+    [Fact]
+    public void Invalid_saved_w3c_context_is_not_forwarded()
+    {
+        var message = new OutboxMessageEntity
+        {
+            EventId = Guid.NewGuid(),
+            RequestId = new string('a', 43),
+            EventType = "audio.extraction.requested",
+            SchemaVersion = 1,
+            OccurredAt = DateTimeOffset.UtcNow,
+            PayloadJson = "{}",
+            State = "pending",
+            NextAttemptAt = DateTimeOffset.UtcNow,
+            TraceParent = "invalid",
+        };
+
+        Assert.Null(RabbitMqOutboxMessagePublisher.GetTraceHeaders(message));
     }
 
     [Fact]

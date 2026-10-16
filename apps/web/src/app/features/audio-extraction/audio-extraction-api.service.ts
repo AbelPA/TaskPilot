@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, defer, tap } from 'rxjs';
+import { Observable, defer, finalize, tap } from 'rxjs';
+import { finishHttpSpan, startHttpSpan } from '../../observability';
 
 export interface AudioExtractionSubmission {
   url: string;
@@ -63,11 +64,24 @@ export class AudioExtractionApiService {
       ]);
       const idempotencyKey = this.getIdempotencyKey(fingerprint);
 
+      const { span, headers } = startHttpSpan('POST /api/audio-extractions');
+      span.setAttribute('http.request.method', 'POST');
+      span.setAttribute('url.path', '/api/audio-extractions');
+      let failed = false;
+
       return this.http
         .post<AcceptedAudioExtraction>('/api/audio-extractions', submission, {
-          headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }),
+          headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey, ...headers }),
         })
-        .pipe(tap(() => this.clearRetryState(idempotencyKey)));
+        .pipe(
+          tap({
+            next: () => this.clearRetryState(idempotencyKey),
+            error: () => {
+              failed = true;
+            },
+          }),
+          finalize(() => finishHttpSpan(span, failed)),
+        );
     });
   }
 
