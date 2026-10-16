@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, defer, tap } from 'rxjs';
+import { Observable, defer, finalize, tap } from 'rxjs';
+import { finishHttpSpan, startHttpSpan } from '../../observability';
 
 export interface AudioExtractionSubmission {
   url: string;
@@ -67,16 +68,24 @@ export class AudioExtractionApiService {
       ]);
       const idempotencyKey = this.getIdempotencyKey(fingerprint);
 
-      const traceparent = this.generateTraceParent();
+      const { span, headers } = startHttpSpan('POST /api/audio-extractions');
+      span.setAttribute('http.request.method', 'POST');
+      span.setAttribute('url.path', '/api/audio-extractions');
+      let failed = false;
 
       return this.http
         .post<AcceptedAudioExtraction>('/api/audio-extractions', submission, {
-          headers: new HttpHeaders({
-            'Idempotency-Key': idempotencyKey,
-            traceparent,
-          }),
+          headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey, ...headers }),
         })
-        .pipe(tap(() => this.clearRetryState(idempotencyKey)));
+        .pipe(
+          tap({
+            next: () => this.clearRetryState(idempotencyKey),
+            error: () => {
+              failed = true;
+            },
+          }),
+          finalize(() => finishHttpSpan(span, failed)),
+        );
     });
   }
 
@@ -136,16 +145,5 @@ export class AudioExtractionApiService {
     if (state.idempotencyKey === idempotencyKey) {
       localStorage.removeItem(RETRY_STATE_KEY);
     }
-  }
-
-  private generateTraceParent(): string {
-    const traceId = this.randomHex(32);
-    const spanId = this.randomHex(16);
-    return `00-${traceId}-${spanId}-01`;
-  }
-
-  private randomHex(length: number): string {
-    const bytes = crypto.getRandomValues(new Uint8Array(length / 2));
-    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 }

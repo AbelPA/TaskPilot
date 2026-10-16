@@ -1,0 +1,37 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - http://localhost:4200
+            - http://127.0.0.1:4200
+          allowed_headers:
+            - Content-Type
+            - traceparent
+            - tracestate
+
+processors:
+  batch:
+
+exporters:
+  otlphttp/lgtm:
+    endpoint: http://otel-lgtm:4318
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/lgtm]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/lgtm]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/lgtm]

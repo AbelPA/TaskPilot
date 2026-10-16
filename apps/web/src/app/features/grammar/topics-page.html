@@ -1,0 +1,29 @@
+<section class="page" aria-labelledby="page-title">
+  <header class="page-heading">
+    <p class="eyebrow">Aprenda no seu ritmo</p>
+    <h1 id="page-title">Gramática inglesa</h1>
+    <p>Escolha um tópico para estudar as regras e praticar com exercícios.</p>
+  </header>
+
+  @if (loading()) {
+    <p role="status">Carregando tópicos…</p>
+  } @else if (errorMessage()) {
+    <p class="notice error" role="alert">{{ errorMessage() }}</p>
+    <button type="button" class="retry-button" (click)="loadTopics()">Tentar novamente</button>
+  } @else if (topics().length === 0) {
+    <p class="notice" role="status">Ainda não há tópicos disponíveis para estudo.</p>
+  } @else {
+    <div class="topic-grid">
+      @for (topic of topics(); track topic.id) {
+        <a class="topic-card" [routerLink]="['/grammar', topic.slug]">
+          <span class="level">{{ topic.level }}</span>
+          <h2>{{ topic.title }}</h2>
+          <p>{{ topic.description }}</p>
+          <span class="exercise-count">
+            {{ topic.exerciseCount }} {{ topic.exerciseCount === 1 ? 'exercício' : 'exercícios' }}
+          </span>
+        </a>
+      }
+    </div>
+  }
+</section>

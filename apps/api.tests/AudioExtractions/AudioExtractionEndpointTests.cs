@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http.Json;
 using Api.AudioExtractions.Persistence;
@@ -43,6 +45,34 @@ public sealed class AudioExtractionEndpointTests
         var outbox = await dbContext.OutboxMessages.SingleAsync();
         Assert.Equal(body.RequestId, outbox.RequestId);
         Assert.Equal("pending", outbox.State);
+    }
+
+    [Fact]
+    public async Task Http_request_duration_metric_uses_route_and_status_attributes()
+    {
+        var measurements = new ConcurrentQueue<KeyValuePair<string, object?>[]>();
+        using var meterListener = new MeterListener
+        {
+            InstrumentPublished = (instrument, listener) => listener.EnableMeasurementEvents(instrument),
+        };
+        meterListener.SetMeasurementEventCallback<double>((instrument, _, tags, _) =>
+        {
+            if (instrument.Name == "http.server.request.duration")
+            {
+                measurements.Enqueue(tags.ToArray());
+            }
+        });
+        meterListener.Start();
+
+        await using var factory = new AudioApiFactory();
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync("/health");
+
+        Assert.NotEmpty(measurements);
+        var attributes = measurements.SelectMany(tags => tags).ToDictionary(tag => tag.Key, tag => tag.Value);
+        Assert.Contains("http.route", attributes.Keys);
+        Assert.Contains("http.request.method", attributes.Keys);
+        Assert.Contains("http.response.status_code", attributes.Keys);
     }
 
     [Fact]
@@ -320,6 +350,7 @@ public sealed class AudioExtractionEndpointTests
                     ["ConnectionStrings:AudioExtraction"] = "Data Source=:memory:",
                     ["AudioExtraction:YouTubeApiKey"] = "test-api-key",
                     ["AudioExtraction:ApplyMigrationsOnStartup"] = "false",
+                    ["Grammar:ApplyMigrationsOnStartup"] = "false",
                     ["AudioExtraction:StorageEndpoint"] = "http://localhost:9000",
                     ["AudioExtraction:StorageAccessKey"] = "test-access-key",
                     ["AudioExtraction:StorageSecretKey"] = "test-secret-key",

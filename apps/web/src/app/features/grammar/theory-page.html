@@ -1,0 +1,74 @@
+<section class="page" aria-labelledby="topic-title">
+  <a class="back-link" routerLink="/grammar">← Todos os tópicos</a>
+
+  @if (loading()) {
+    <p role="status">Carregando teoria…</p>
+  } @else if (errorMessage()) {
+    <p class="notice error" role="alert">{{ errorMessage() }}</p>
+  } @else if (topic(); as currentTopic) {
+    <header class="page-heading">
+      <p class="eyebrow">{{ currentTopic.level }}</p>
+      <h1 id="topic-title">{{ currentTopic.title }}</h1>
+      <p>{{ currentTopic.description }}</p>
+    </header>
+
+    @if (currentTopic.theorySections.length === 0) {
+      <p class="notice">Ainda não há teoria cadastrada para este tópico.</p>
+    } @else {
+      @for (section of currentTopic.theorySections; track section.displayOrder) {
+        <article class="theory-section">
+          <h2>{{ section.title }}</h2>
+          @for (block of section.blocks; track $index) {
+            @if (isList(block)) {
+              @if (block.ordered) {
+                <ol>
+                  @for (item of block.items; track $index) { <li>{{ item }}</li> }
+                </ol>
+              } @else {
+                <ul>
+                  @for (item of block.items; track $index) { <li>{{ item }}</li> }
+                </ul>
+              }
+            } @else if (isTable(block)) {
+              <div class="table-scroll">
+                <table>
+                  <thead><tr>@for (header of block.headers; track $index) { <th scope="col">{{ header }}</th> }</tr></thead>
+                  <tbody>
+                    @for (row of block.rows; track $index) {
+                      <tr>@for (cell of row; track $index) { <td>{{ cell }}</td> }</tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else if (isExample(block)) {
+              <figure class="example">
+                <blockquote>{{ block.text }}</blockquote>
+                @if (block.translation) { <figcaption>{{ block.translation }}</figcaption> }
+              </figure>
+            } @else if (block.type === 'note') {
+              <aside class="note">{{ block.text }}</aside>
+            } @else {
+              <p>{{ block.text }}</p>
+            }
+          }
+        </article>
+      }
+    }
+
+    <footer class="topic-navigation">
+      @if (currentTopic.previousTopicSlug) {
+        <a class="secondary-button" [routerLink]="['/grammar', currentTopic.previousTopicSlug]">Tópico anterior</a>
+      }
+      @if (currentTopic.exerciseCount > 0) {
+        <a class="primary-button" [routerLink]="['/grammar', currentTopic.slug, 'practice']">
+          Praticar exercícios
+        </a>
+      } @else {
+        <p role="status">Ainda não há exercícios disponíveis para este tópico.</p>
+      }
+      @if (currentTopic.nextTopicSlug) {
+        <a class="secondary-button" [routerLink]="['/grammar', currentTopic.nextTopicSlug]">Próximo tópico</a>
+      }
+    </footer>
+  }
+</section>

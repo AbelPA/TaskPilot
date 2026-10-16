@@ -1,0 +1,290 @@
+openapi: 3.1.0
+info:
+  title: TaskPilot Grammar Study API
+  version: 1.0.0
+  description: Leitura de tópicos e exercícios, com correção no servidor.
+servers:
+  - url: /
+paths:
+  /api/grammar/topics:
+    get:
+      operationId: listGrammarTopics
+      summary: Lista tópicos ativos para estudo
+      responses:
+        "200":
+          description: Tópicos ordenados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopicSummary'
+  /api/grammar/topics/{slug}:
+    get:
+      operationId: getGrammarTopic
+      summary: Obtém teoria e resumo do tópico
+      parameters:
+        - $ref: '#/components/parameters/TopicSlug'
+      responses:
+        "200":
+          description: Tópico e seções teóricas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicDetail'
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /api/grammar/topics/{slug}/exercises:
+    get:
+      operationId: listTopicExercises
+      summary: Lista exercícios ativos do tópico
+      parameters:
+        - $ref: '#/components/parameters/TopicSlug'
+      responses:
+        "200":
+          description: Exercícios ordenados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExerciseSummary'
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /api/grammar/exercises/{exerciseId}:
+    get:
+      operationId: getExercise
+      summary: Obtém exercício sem dados de correção
+      parameters:
+        - $ref: '#/components/parameters/ExerciseId'
+      responses:
+        "200":
+          description: Exercício para resolução; não contém respostas corretas ou explicações de correção
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exercise'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InvalidContent'
+  /api/grammar/exercises/{exerciseId}/submit:
+    post:
+      operationId: submitExercise
+      summary: Corrige as respostas e calcula a pontuação
+      parameters:
+        - $ref: '#/components/parameters/ExerciseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Submission'
+      responses:
+        "200":
+          description: Resultado individual por lacuna/questão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResult'
+        "400":
+          description: Submissão malformada, duplicada ou com chaves que não pertencem ao exercício
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InvalidContent'
+components:
+  parameters:
+    TopicSlug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+    ExerciseId:
+      name: exerciseId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    NotFound:
+      description: Conteúdo inexistente ou inativo
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InvalidContent:
+      description: Conteúdo ativo incompleto ou inválido; erro registrado, sem exercício utilizável
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    TopicSummary:
+      type: object
+      required: [id, slug, title, description, level, displayOrder, exerciseCount]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        title: { type: string }
+        description: { type: string }
+        level: { type: string, enum: [A1, A2, B1, B2, C1, C2], description: Nível de proficiência CEFR }
+        displayOrder: { type: integer }
+        exerciseCount: { type: integer, minimum: 0 }
+    TopicDetail:
+      allOf:
+        - $ref: '#/components/schemas/TopicSummary'
+        - type: object
+          required: [theorySections]
+          properties:
+            previousTopicSlug: { type: [string, 'null'] }
+            nextTopicSlug: { type: [string, 'null'] }
+            theorySections:
+              type: array
+              items: { $ref: '#/components/schemas/TheorySection' }
+    TheorySection:
+      type: object
+      required: [title, displayOrder, blocks]
+      properties:
+        title: { type: string }
+        displayOrder: { type: integer }
+        blocks:
+          type: array
+          items: { $ref: '#/components/schemas/TheoryBlock' }
+    TheoryBlock:
+      oneOf:
+        - type: object
+          required: [type, text]
+          properties:
+            type: { const: paragraph }
+            text: { type: string }
+        - type: object
+          required: [type, items]
+          properties:
+            type: { const: list }
+            ordered: { type: boolean }
+            items: { type: array, items: { type: string } }
+        - type: object
+          required: [type, text]
+          properties:
+            type: { const: example }
+            text: { type: string }
+            translation: { type: [string, 'null'] }
+        - type: object
+          required: [type, text]
+          properties:
+            type: { const: note }
+            text: { type: string }
+        - type: object
+          required: [type, headers, rows]
+          properties:
+            type: { const: table }
+            headers: { type: array, items: { type: string } }
+            rows: { type: array, items: { type: array, items: { type: string } } }
+    ExerciseSummary:
+      type: object
+      required: [id, title, exerciseType, displayOrder, itemCount]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        exerciseType: { type: string, enum: [fill_blank, multiple_choice] }
+        displayOrder: { type: integer }
+        itemCount: { type: integer, minimum: 1 }
+    Exercise:
+      type: object
+      required: [id, title, instruction, exerciseType, contentTemplate, itemCount]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        instruction: { type: string }
+        exerciseType: { type: string, enum: [fill_blank, multiple_choice] }
+        contentTemplate: { type: string, description: Texto com marcadores de lacuna ou contexto partilhado }
+        itemCount: { type: integer, minimum: 1 }
+        blanks:
+          type: array
+          items:
+            type: object
+            required: [key, displayOrder, inputType, points]
+            properties:
+              key: { type: string }
+              displayOrder: { type: integer }
+              inputType: { type: string, enum: [text, select] }
+              points: { type: number, exclusiveMinimum: 0 }
+              options:
+                type: array
+                items: { $ref: '#/components/schemas/Option' }
+        questions:
+          type: array
+          items:
+            type: object
+            required: [key, prompt, displayOrder, points, options]
+            properties:
+              key: { type: string }
+              prompt: { type: string }
+              displayOrder: { type: integer }
+              points: { type: number, exclusiveMinimum: 0 }
+              options:
+                type: array
+                items: { $ref: '#/components/schemas/Option' }
+    Option:
+      type: object
+      required: [key, text, displayOrder]
+      properties:
+        key: { type: string }
+        text: { type: string }
+        displayOrder: { type: integer }
+    Submission:
+      type: object
+      properties:
+        blankAnswers:
+          type: array
+          items:
+            type: object
+            required: [blankKey, answer]
+            properties:
+              blankKey: { type: string }
+              answer: { type: string }
+        questionAnswers:
+          type: array
+          items:
+            type: object
+            required: [questionKey, optionKey]
+            properties:
+              questionKey: { type: string }
+              optionKey: { type: string }
+    SubmissionResult:
+      type: object
+      required: [exerciseId, score, maxScore, percentage, explanation, results]
+      properties:
+        exerciseId: { type: string, format: uuid }
+        score: { type: number, minimum: 0 }
+        maxScore: { type: number, exclusiveMinimum: 0 }
+        percentage: { type: number, minimum: 0, maximum: 100 }
+        explanation: { type: string, description: Explicação geral do exercício, apresentada somente após a submissão }
+        results:
+          type: array
+          items:
+            type: object
+            required: [itemKey, itemType, submittedAnswer, isCorrect, correctAnswer, explanation, points]
+            properties:
+              itemKey: { type: string }
+              itemType: { type: string, enum: [blank, question] }
+              submittedAnswer: { type: string }
+              isCorrect: { type: boolean }
+              correctAnswer: { type: string }
+              explanation: { type: string }
+              points: { type: number }
+    Problem:
+      type: object
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string }

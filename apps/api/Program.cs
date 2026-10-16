@@ -1,6 +1,9 @@
 using Api.AudioExtractions.Configuration;
 using Api.AudioExtractions.Endpoints;
 using Api.AudioExtractions.Messaging;
+using Api.Grammar.Configuration;
+using Api.Grammar.Endpoints;
+using Api.Grammar.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +14,7 @@ builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.W
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddAudioExtractions(builder.Configuration);
+builder.Services.AddGrammar(builder.Configuration);
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -34,12 +38,20 @@ app.MapGet(
             : Results.StatusCode(StatusCodes.Status503ServiceUnavailable))
     .WithName("Health");
 app.MapAudioExtractionEndpoints();
+app.MapGrammarEndpoints();
 
 if (app.Configuration.GetValue("AudioExtraction:ApplyMigrationsOnStartup", true))
 {
     await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<
         Api.AudioExtractions.Persistence.AudioExtractionDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
+if (app.Configuration.GetValue($"{GrammarOptions.SectionName}:{nameof(GrammarOptions.ApplyMigrationsOnStartup)}", true))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<GrammarDbContext>();
     await dbContext.Database.MigrateAsync();
 }
 

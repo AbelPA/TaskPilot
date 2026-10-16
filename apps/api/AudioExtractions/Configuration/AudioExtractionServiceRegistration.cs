@@ -51,18 +51,23 @@ public static class AudioExtractionServiceRegistration
                     options.Endpoint = new Uri(otlpEndpoint.TrimEnd('/') + "/v1/metrics");
                     options.Protocol = OtlpExportProtocol.HttpProtobuf;
                 }));
-        services.AddLogging(logging => logging.AddOpenTelemetry(options =>
+        services.AddLogging(logging =>
         {
-            options.IncludeFormattedMessage = true;
-            options.IncludeScopes = true;
-            options.ParseStateValues = true;
-            options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "taskpilot-api"));
-            options.AddOtlpExporter(exporter =>
+            logging.Configure(options => options.ActivityTrackingOptions =
+                ActivityTrackingOptions.TraceId | ActivityTrackingOptions.SpanId);
+            logging.AddOpenTelemetry(options =>
             {
-                exporter.Endpoint = new Uri(otlpEndpoint.TrimEnd('/') + "/v1/logs");
-                exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                options.IncludeFormattedMessage = true;
+                options.IncludeScopes = true;
+                options.ParseStateValues = true;
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "taskpilot-api"));
+                options.AddOtlpExporter(exporter =>
+                {
+                    exporter.Endpoint = new Uri(otlpEndpoint.TrimEnd('/') + "/v1/logs");
+                    exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                });
             });
-        }));
+        });
 
         services.AddOptions<AudioExtractionOptions>()
             .Bind(configuration.GetSection(AudioExtractionOptions.SectionName))
