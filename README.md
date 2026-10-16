@@ -45,9 +45,15 @@ available at <http://localhost:4200>; RabbitMQ management is at
 The startup script stays open and prints log lines matching common error indicators;
 press `Ctrl+C` to stop monitoring without stopping the containers. To view all
 service output, use `docker compose logs --follow`; stop the services with
-`docker compose down`. The API and worker export traces to OTLP over HTTP so the
-same W3C `traceparent` can be followed from the browser, through RabbitMQ, and
-into the worker.
+`docker compose down`. The browser exports spans to the local OTLP collector at
+`http://localhost:4319`, which forwards traces, logs, and metrics to the LGTM
+stack. The API and worker also export only through this collector. In Grafana
+Explore, use Tempo to find a trace by service and time window, then search Loki
+for log records using its `trace_id`; `requestId` remains a separate business
+identifier. Prometheus metrics include HTTP request duration/counts and the
+worker's `audio_worker.processed` and `audio_worker.processing.duration`
+instruments. See [the distributed observability quickstart](specs/003-distributed-observability-poc/quickstart.md)
+for the end-to-end steps and troubleshooting.
 
 On macOS, enter the key without echoing it or saving it in shell history:
 

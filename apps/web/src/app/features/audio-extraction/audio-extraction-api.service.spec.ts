@@ -2,12 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AudioExtractionApiService } from './audio-extraction-api.service';
+import { finishHttpSpan, initializeTelemetry, startHttpSpan } from '../../observability';
 
 describe('AudioExtractionApiService', () => {
   let service: AudioExtractionApiService;
   let http: HttpTestingController;
 
   beforeEach(() => {
+    initializeTelemetry();
     localStorage.clear();
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -17,6 +19,14 @@ describe('AudioExtractionApiService', () => {
   });
 
   afterEach(() => http.verify());
+
+  it('propagates the context of an exported OpenTelemetry span', () => {
+    const { span, headers } = startHttpSpan('test request');
+    const context = span.spanContext();
+
+    expect(headers['traceparent']).toBe(`00-${context.traceId}-${context.spanId}-01`);
+    finishHttpSpan(span, false);
+  });
 
   it('sends the request contract and an idempotency key and returns the accepted response', () => {
     const request = {
