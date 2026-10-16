@@ -303,6 +303,7 @@ public sealed class AudioExtractionResultTests
                     ["AudioExtraction:YouTubeApiKey"] = "test-api-key",
                     ["AudioExtraction:ApplyMigrationsOnStartup"] = "false",
                     ["Grammar:ApplyMigrationsOnStartup"] = "false",
+                    ["Settings:ApplyMigrationsOnStartup"] = "false",
                     ["AudioExtraction:StorageEndpoint"] = "http://localhost:9000",
                     ["AudioExtraction:StorageAccessKey"] = "test-access-key",
                     ["AudioExtraction:StorageSecretKey"] = "test-secret-key",

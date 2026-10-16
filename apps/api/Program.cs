@@ -4,6 +4,9 @@ using Api.AudioExtractions.Messaging;
 using Api.Grammar.Configuration;
 using Api.Grammar.Endpoints;
 using Api.Grammar.Persistence;
+using Api.Settings.Configuration;
+using Api.Settings.Endpoints;
+using Api.Settings.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +18,7 @@ builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.W
 builder.Services.AddOpenApi();
 builder.Services.AddAudioExtractions(builder.Configuration);
 builder.Services.AddGrammar(builder.Configuration);
+builder.Services.AddSettings(builder.Configuration);
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -39,6 +43,7 @@ app.MapGet(
     .WithName("Health");
 app.MapAudioExtractionEndpoints();
 app.MapGrammarEndpoints();
+app.MapSettingsEndpoints();
 
 if (app.Configuration.GetValue("AudioExtraction:ApplyMigrationsOnStartup", true))
 {
@@ -52,6 +57,13 @@ if (app.Configuration.GetValue($"{GrammarOptions.SectionName}:{nameof(GrammarOpt
 {
     await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<GrammarDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
+if (app.Configuration.GetValue($"{SettingsOptions.SectionName}:{nameof(SettingsOptions.ApplyMigrationsOnStartup)}", true))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<SettingsDbContext>();
     await dbContext.Database.MigrateAsync();
 }
 

@@ -12,7 +12,7 @@ Use the existing audio-extraction flow to validate the end-to-end trace, correla
 ## Start the local environment
 
 1. From the repository root, create `.env` from `.env.example` if needed and set local-only values. The startup script creates the file when absent.
-2. Export `YOUTUBE_DATA_API_KEY` in the shell without writing it into source control, then run:
+2. Run (the YouTube API key is configured later on the Settings screen, `/settings`):
 
    ```sh
    ./scripts/start-local.sh

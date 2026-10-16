@@ -3,8 +3,6 @@ using System.Text.Json;
 using System.Xml;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Api.AudioExtractions.Configuration;
 
 namespace Api.AudioExtractions.YouTube;
 
@@ -22,15 +20,27 @@ public interface IYouTubeVideoMetadataClient
     Task<YouTubeVideoMetadata> GetVideoMetadataAsync(string videoId, CancellationToken cancellationToken);
 }
 
+public interface IYouTubeApiKeyProvider
+{
+    Task<string?> GetApiKeyAsync(CancellationToken cancellationToken);
+}
+
 public sealed class YouTubeVideoMetadataClient(
     HttpClient httpClient,
-    IOptions<AudioExtractionOptions> options,
+    IYouTubeApiKeyProvider apiKeyProvider,
     ILogger<YouTubeVideoMetadataClient> logger) : IYouTubeVideoMetadataClient
 {
     public async Task<YouTubeVideoMetadata> GetVideoMetadataAsync(
         string videoId,
         CancellationToken cancellationToken)
     {
+        var apiKey = await apiKeyProvider.GetApiKeyAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            logger.LogError("YouTube metadata request skipped because no YouTube API key is configured.");
+            throw new YouTubeMetadataUnavailableException();
+        }
+
         var uri = QueryHelpers.AddQueryString(
             "https://www.googleapis.com/youtube/v3/videos",
             new Dictionary<string, string?>
@@ -39,7 +49,7 @@ public sealed class YouTubeVideoMetadataClient(
                 ["id"] = videoId,
             });
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        request.Headers.TryAddWithoutValidation("X-Goog-Api-Key", options.Value.YouTubeApiKey);
+        request.Headers.TryAddWithoutValidation("X-Goog-Api-Key", apiKey);
         HttpResponseMessage response;
         try
         {

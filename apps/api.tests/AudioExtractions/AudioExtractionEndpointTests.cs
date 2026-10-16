@@ -57,7 +57,8 @@ public sealed class AudioExtractionEndpointTests
         };
         meterListener.SetMeasurementEventCallback<double>((instrument, _, tags, _) =>
         {
-            if (instrument.Name == "http.server.request.duration")
+            if (instrument.Name == "http.server.request.duration" &&
+                tags.ToArray().Any(tag => tag.Key == "http.route" && Equals(tag.Value, "/health")))
             {
                 measurements.Enqueue(tags.ToArray());
             }
@@ -351,6 +352,7 @@ public sealed class AudioExtractionEndpointTests
                     ["AudioExtraction:YouTubeApiKey"] = "test-api-key",
                     ["AudioExtraction:ApplyMigrationsOnStartup"] = "false",
                     ["Grammar:ApplyMigrationsOnStartup"] = "false",
+                    ["Settings:ApplyMigrationsOnStartup"] = "false",
                     ["AudioExtraction:StorageEndpoint"] = "http://localhost:9000",
                     ["AudioExtraction:StorageAccessKey"] = "test-access-key",
                     ["AudioExtraction:StorageSecretKey"] = "test-secret-key",
