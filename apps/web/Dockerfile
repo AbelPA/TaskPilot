@@ -7,8 +7,8 @@ RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
-COPY apps/web/posthog-runtime-config.js /etc/taskpilot/runtime-config.js.template
-COPY apps/web/docker-entrypoint.d/30-posthog-runtime-config.sh /docker-entrypoint.d/30-posthog-runtime-config.sh
+COPY apps/web/openreplay-runtime-config.js /etc/taskpilot/runtime-config.js.template
+COPY apps/web/docker-entrypoint.d/30-openreplay-runtime-config.sh /docker-entrypoint.d/30-openreplay-runtime-config.sh
 COPY --from=build /src/apps/web/dist/web/browser /usr/share/nginx/html
 EXPOSE 80
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \

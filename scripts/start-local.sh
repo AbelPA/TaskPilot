@@ -56,23 +56,6 @@ if [ ! -f "$ROOT_DIR/.env" ]; then
   printf 'Criado .env a partir de .env.example.\n'
 fi
 
-python3 - "$ROOT_DIR/.env" <<'PY'
-from pathlib import Path
-import sys
-
-env_path = Path(sys.argv[1])
-lines = env_path.read_text().splitlines()
-key = "POSTHOG_HOST="
-for index, line in enumerate(lines):
-    if line.startswith(key):
-        if not line[len(key):].strip():
-            lines[index] = key + "http://localhost:8000"
-        break
-else:
-    lines.append(key + "http://localhost:8000")
-env_path.write_text("\n".join(lines) + "\n")
-PY
-
 if ! grep -Eq '^SETTINGS_ENCRYPTION_KEY=.+' "$ROOT_DIR/.env"; then
   if ! command -v openssl >/dev/null 2>&1; then
     printf 'Erro: openssl é necessário para gerar SETTINGS_ENCRYPTION_KEY no .env.\n' >&2
@@ -89,12 +72,10 @@ fi
 
 cd "$ROOT_DIR"
 printf '\nIniciando a aplicação e suas dependências...\n'
-"$ROOT_DIR/scripts/start-posthog-local.sh"
 docker compose up --detach --build --wait
 
 printf '\nAplicação iniciada:\n'
 printf '  Web:             http://localhost:4200\n'
-printf '  PostHog:         http://localhost:8000\n'
 printf '  RabbitMQ:        http://localhost:15672\n'
 printf '  API S3:          http://localhost:8333\n'
 printf '  Console filer:   http://localhost:8888\n'

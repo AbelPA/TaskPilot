@@ -4,12 +4,12 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { initializeTelemetry } from './observability';
-import { initializePostHog } from './posthog';
+import { initializeOpenReplay } from './openreplay';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideAppInitializer(initializeTelemetry),
-    provideAppInitializer(initializePostHog),
+    provideAppInitializer(initializeOpenReplay),
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(),
     provideRouter(routes),

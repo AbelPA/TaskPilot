@@ -127,8 +127,7 @@ services:
       api:
         condition: service_healthy
     environment:
-      POSTHOG_PROJECT_TOKEN: ${POSTHOG_PROJECT_TOKEN:-}
-      POSTHOG_HOST: ${POSTHOG_HOST:-}
+      OPENREPLAY_PROJECT_KEY: ${OPENREPLAY_PROJECT_KEY:-}
     ports:
       - "4200:80"
 
