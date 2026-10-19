@@ -54,6 +54,11 @@ async def run() -> None:
                     chromedriver_path=settings.chromedriver_path or None,
                 )
             )
+        else:
+            logging.getLogger(__name__).warning(
+                "API_BASE_URL or INTERNAL_API_TOKEN is not set; the YouTube account cannot be loaded "
+                "and downloads will run without authentication."
+            )
         service = AudioExtractionService(settings, storage, exchange, youtube_session)
         await consume_requests(queue, exchange, dead_letter_exchange, service)
         logging.getLogger(__name__).info("Audio extraction worker is consuming requests.")

@@ -78,7 +78,7 @@ async def test_session_logs_in_once_caches_and_copies_privately(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_session_returns_none_without_configured_account(tmp_path):
+async def test_session_returns_none_without_configured_account(tmp_path, caplog):
     session = YouTubeSession(
         _settings(tmp_path),
         account_loader=lambda settings: None,
@@ -86,6 +86,7 @@ async def test_session_returns_none_without_configured_account(tmp_path):
     )
 
     assert await session.prepare_cookie_file(tmp_path) is None
+    assert "No YouTube account is configured" in caplog.text
 
 
 @pytest.mark.asyncio

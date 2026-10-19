@@ -37,7 +37,8 @@ public sealed class YouTubeVideoMetadataClient(
         var apiKey = await apiKeyProvider.GetApiKeyAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            logger.LogError("YouTube metadata request skipped because no YouTube API key is configured.");
+            logger.LogError(
+                "YouTube metadata request skipped because no YouTube API key is configured. Set it on the Settings screen (/settings).");
             throw new YouTubeMetadataUnavailableException();
         }
 
