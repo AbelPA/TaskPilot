@@ -35,6 +35,19 @@ def test_netscape_export_keeps_only_google_domains_and_marks_http_only():
     assert len(lines) == 3
 
 
+def test_netscape_export_reads_cdp_expiry_and_session_cookies():
+    content = to_netscape(
+        [
+            {"domain": ".google.com", "name": "SAPISID", "value": "a", "expires": 1900000000.5},
+            {"domain": ".youtube.com", "name": "S", "value": "b", "expires": -1},
+        ]
+    )
+
+    lines = content.splitlines()
+    assert lines[1].split("\t")[4] == "1900000000"
+    assert lines[2].split("\t")[4] == "0"
+
+
 @pytest.mark.asyncio
 async def test_session_logs_in_once_caches_and_copies_privately(tmp_path):
     logins = []
@@ -85,7 +98,7 @@ async def test_downloader_passes_cookies_and_maps_bot_check(tmp_path, monkeypatc
         returncode = 1
 
         async def communicate(self):
-            return b"", b"ERROR: [youtube] x: Sign in to confirm you're not a bot."
+            return b"", b"ERROR: [youtube] x: The page needs to be reloaded."
 
     async def fake_exec(*arguments, **kwargs):
         captured["arguments"] = arguments

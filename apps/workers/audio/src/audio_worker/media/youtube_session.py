@@ -77,13 +77,19 @@ def to_netscape(cookies: list[dict[str, Any]]) -> str:
                     "TRUE" if domain.startswith(".") else "FALSE",
                     str(cookie.get("path", "/")),
                     "TRUE" if cookie.get("secure") else "FALSE",
-                    str(int(cookie.get("expiry", 0))),
+                    str(_expiry(cookie)),
                     name,
                     value,
                 ]
             )
         )
     return "\n".join(lines) + "\n"
+
+
+def _expiry(cookie: dict[str, Any]) -> int:
+    # Selenium reports "expiry", CDP reports "expires" (-1 for session cookies).
+    value = cookie.get("expiry", cookie.get("expires", 0))
+    return max(int(value), 0)
 
 
 def login_with_chrome(account: YouTubeAccount, settings: YouTubeSessionSettings) -> list[dict[str, Any]]:
@@ -133,10 +139,11 @@ def login_with_chrome(account: YouTubeAccount, settings: YouTubeSessionSettings)
                 raise YouTubeLoginError(
                     "Google did not complete the sign-in (wrong password, 2-step verification or a challenge)."
                 ) from error
-            driver.get("https://www.youtube.com/")
-            cookies = driver.get_cookies()
-            driver.get("https://accounts.google.com/")
-            return cookies + driver.get_cookies()
+            # robots.txt loads no player page, so YouTube does not rotate the session cookies
+            # before they are exported.
+            driver.get("https://www.youtube.com/robots.txt")
+            # CDP returns the cookies of every domain; get_cookies() only returns the current one.
+            return driver.execute_cdp_cmd("Network.getAllCookies", {})["cookies"]
         except TimeoutException as error:
             raise YouTubeLoginError(
                 f"The Google sign-in page did not respond as expected ({_describe_page(driver)})."
