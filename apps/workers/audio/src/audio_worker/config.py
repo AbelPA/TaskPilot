@@ -20,6 +20,11 @@ class WorkerSettings:
     maximum_download_bytes: int
     maximum_output_bytes: int
     job_timeout_seconds: int
+    youtube_api_base_url: str = ""
+    internal_api_token: str = ""
+    youtube_session_directory: str = "/var/lib/taskpilot/youtube-session"
+    chrome_binary: str = ""
+    chromedriver_path: str = ""
 
 
 def load_settings() -> WorkerSettings:
@@ -76,4 +81,11 @@ def load_settings() -> WorkerSettings:
         maximum_download_bytes=configured_limits["AUDIO_MAXIMUM_DOWNLOAD_BYTES"],
         maximum_output_bytes=configured_limits["AUDIO_MAXIMUM_OUTPUT_BYTES"],
         job_timeout_seconds=configured_limits["AUDIO_JOB_TIMEOUT_SECONDS"],
+        youtube_api_base_url=os.getenv("API_BASE_URL", "").strip(),
+        internal_api_token=os.getenv("INTERNAL_API_TOKEN", "").strip(),
+        youtube_session_directory=os.getenv(
+            "YOUTUBE_SESSION_DIRECTORY", "/var/lib/taskpilot/youtube-session"
+        ).strip(),
+        chrome_binary=os.getenv("CHROME_BIN", "").strip(),
+        chromedriver_path=os.getenv("CHROMEDRIVER_PATH", "").strip(),
     )

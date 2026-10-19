@@ -1,9 +1,11 @@
 import asyncio
 import logging
+from pathlib import Path
 
 import aio_pika
 
 from audio_worker.config import load_settings
+from audio_worker.media.youtube_session import YouTubeSession, YouTubeSessionSettings
 from audio_worker.messaging.consumer import consume_requests
 from audio_worker.observability import configure_tracing
 from audio_worker.messaging.topology import (
@@ -41,7 +43,18 @@ async def run() -> None:
             ),
             settings.maximum_output_bytes,
         )
-        service = AudioExtractionService(settings, storage, exchange)
+        youtube_session = None
+        if settings.youtube_api_base_url and settings.internal_api_token:
+            youtube_session = YouTubeSession(
+                YouTubeSessionSettings(
+                    api_base_url=settings.youtube_api_base_url,
+                    internal_token=settings.internal_api_token,
+                    cache_directory=Path(settings.youtube_session_directory),
+                    chrome_binary=settings.chrome_binary or None,
+                    chromedriver_path=settings.chromedriver_path or None,
+                )
+            )
+        service = AudioExtractionService(settings, storage, exchange, youtube_session)
         await consume_requests(queue, exchange, dead_letter_exchange, service)
         logging.getLogger(__name__).info("Audio extraction worker is consuming requests.")
         await asyncio.Event().wait()

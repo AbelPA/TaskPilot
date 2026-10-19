@@ -8,10 +8,17 @@ export interface YouTubeApiKeyStatus {
   updatedAt: string | null;
 }
 
+export interface YouTubeAccountStatus {
+  configured: boolean;
+  username: string | null;
+  updatedAt: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SettingsApiService {
   private readonly http = inject(HttpClient);
   private readonly url = '/api/settings/youtube-api-key';
+  private readonly accountUrl = '/api/settings/youtube-account';
 
   getYouTubeApiKeyStatus(): Observable<YouTubeApiKeyStatus> {
     return this.http.get<YouTubeApiKeyStatus>(this.url);
@@ -23,5 +30,17 @@ export class SettingsApiService {
 
   removeYouTubeApiKey(): Observable<YouTubeApiKeyStatus> {
     return this.http.delete<YouTubeApiKeyStatus>(this.url);
+  }
+
+  getYouTubeAccountStatus(): Observable<YouTubeAccountStatus> {
+    return this.http.get<YouTubeAccountStatus>(this.accountUrl);
+  }
+
+  saveYouTubeAccount(username: string, password: string): Observable<YouTubeAccountStatus> {
+    return this.http.put<YouTubeAccountStatus>(this.accountUrl, { username, password });
+  }
+
+  removeYouTubeAccount(): Observable<YouTubeAccountStatus> {
+    return this.http.delete<YouTubeAccountStatus>(this.accountUrl);
   }
 }

@@ -88,6 +88,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__AudioExtraction: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Settings__EncryptionKey: ${SETTINGS_ENCRYPTION_KEY:?Set SETTINGS_ENCRYPTION_KEY in .env (scripts/start-local.sh generates it)}
+      Settings__InternalToken: ${INTERNAL_API_TOKEN:?Set INTERNAL_API_TOKEN in .env (scripts/start-local.sh generates it)}
       AudioExtraction__ApplyMigrationsOnStartup: "true"
       AudioExtraction__StorageEndpoint: ${S3_PUBLIC_ENDPOINT:-http://localhost:8333}
       AudioExtraction__StorageManagementEndpoint: ${S3_ENDPOINT:-http://seaweedfs:8333}
@@ -144,7 +145,14 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_SERVICE_NAME: taskpilot-audio-worker
+      API_BASE_URL: http://api:8080
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?Set INTERNAL_API_TOKEN in .env (scripts/start-local.sh generates it)}
+    volumes:
+      - youtube-session:/var/lib/taskpilot/youtube-session
+    shm_size: 512m
     depends_on:
+      api:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       s3-init:
@@ -165,3 +173,4 @@ volumes:
   postgres-data:
   rabbitmq-data:
   seaweedfs-data:
+  youtube-session:

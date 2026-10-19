@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { SettingsApiService, YouTubeApiKeyStatus } from './settings-api.service';
+import { SettingsApiService, YouTubeAccountStatus, YouTubeApiKeyStatus } from './settings-api.service';
 import { SettingsPage } from './settings-page';
 
 const none: YouTubeApiKeyStatus = { configured: false, source: 'none', updatedAt: null };
@@ -11,10 +11,20 @@ const stored: YouTubeApiKeyStatus = {
   updatedAt: '2026-10-16T19:00:00Z',
 };
 
+const noAccount: YouTubeAccountStatus = { configured: false, username: null, updatedAt: null };
+
 async function render(api: Partial<SettingsApiService>) {
   await TestBed.configureTestingModule({
     imports: [SettingsPage],
-    providers: [{ provide: SettingsApiService, useValue: api }],
+    providers: [
+      {
+        provide: SettingsApiService,
+        useValue: {
+          getYouTubeAccountStatus: () => of(noAccount),
+          ...api,
+        },
+      },
+    ],
   }).compileComponents();
   const fixture = TestBed.createComponent(SettingsPage);
   fixture.detectChanges();
@@ -101,5 +111,30 @@ describe('SettingsPage', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('[role="alert"]')?.textContent).toContain('Não foi possível carregar');
     expect(element.querySelector('.primary-button')?.textContent).toContain('Tentar novamente');
+  });
+
+  it('saves the YouTube account, clears the password and never renders it', async () => {
+    const save = vi.fn(() =>
+      of({ configured: true, username: 'conta@example.com', updatedAt: '2026-10-16T19:00:00Z' }),
+    );
+    const fixture = await render({ getYouTubeApiKeyStatus: () => of(none), saveYouTubeAccount: save });
+    const element = fixture.nativeElement as HTMLElement;
+    const username = element.querySelector<HTMLInputElement>('#youtube-account-username')!;
+    const password = element.querySelector<HTMLInputElement>('#youtube-account-password')!;
+
+    username.value = ' conta@example.com ';
+    username.dispatchEvent(new Event('input'));
+    password.value = 'Sup3r-secret';
+    password.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    element.querySelectorAll<HTMLFormElement>('form')[1].dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(password.type).toBe('password');
+    expect(save).toHaveBeenCalledWith('conta@example.com', 'Sup3r-secret');
+    expect(element.textContent).toContain('Conta configurada: conta@example.com');
+    expect(element.textContent).not.toContain('Sup3r-secret');
+    expect(password.value).toBe('');
   });
 });

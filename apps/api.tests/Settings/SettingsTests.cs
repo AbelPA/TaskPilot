@@ -94,6 +94,75 @@ public sealed class SettingsTests
     }
 
     [Fact]
+    public async Task Youtube_account_is_stored_encrypted_and_password_is_never_returned()
+    {
+        await using var factory = new SettingsApiFactory();
+        await factory.InitializeDatabaseAsync();
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.PutAsJsonAsync(
+            "/api/settings/youtube-account",
+            new SaveYouTubeAccountRequest(" worker@example.com ", "s3cret-Password!"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain("s3cret-Password!", await response.Content.ReadAsStringAsync());
+        var status = await client.GetFromJsonAsync<YouTubeAccountStatus>("/api/settings/youtube-account");
+        Assert.True(status!.Configured);
+        Assert.Equal("worker@example.com", status.Username);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var stored = await scope.ServiceProvider.GetRequiredService<SettingsDbContext>().Settings.SingleAsync();
+        Assert.DoesNotContain("s3cret-Password!", stored.ProtectedValue);
+        Assert.DoesNotContain("worker@example.com", stored.ProtectedValue);
+
+        var removed = await client.DeleteFromJsonAsync<YouTubeAccountStatus>("/api/settings/youtube-account");
+        Assert.False(removed!.Configured);
+    }
+
+    [Theory]
+    [InlineData("", "password")]
+    [InlineData("user@example.com", "")]
+    public async Task Youtube_account_rejects_missing_fields(string username, string password)
+    {
+        await using var factory = new SettingsApiFactory();
+        await factory.InitializeDatabaseAsync();
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.PutAsJsonAsync(
+            "/api/settings/youtube-account",
+            new SaveYouTubeAccountRequest(username, password));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Internal_youtube_account_requires_the_token_and_returns_credentials()
+    {
+        await using var factory = new SettingsApiFactory();
+        await factory.InitializeDatabaseAsync();
+        using var client = factory.CreateHttpsClient();
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/internal/youtube-account")).StatusCode);
+        using var wrong = new HttpRequestMessage(HttpMethod.Get, "/internal/youtube-account");
+        wrong.Headers.Add("X-Internal-Token", "wrong");
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(wrong)).StatusCode);
+
+        using var empty = new HttpRequestMessage(HttpMethod.Get, "/internal/youtube-account");
+        empty.Headers.Add("X-Internal-Token", "internal-test-token");
+        Assert.Equal(HttpStatusCode.NoContent, (await client.SendAsync(empty)).StatusCode);
+
+        await client.PutAsJsonAsync(
+            "/api/settings/youtube-account",
+            new SaveYouTubeAccountRequest("worker@example.com", "s3cret-Password!"));
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/internal/youtube-account");
+        request.Headers.Add("X-Internal-Token", "internal-test-token");
+        var credentials = await (await client.SendAsync(request)).Content
+            .ReadFromJsonAsync<YouTubeAccountCredentials>();
+        Assert.Equal("worker@example.com", credentials!.Username);
+        Assert.Equal("s3cret-Password!", credentials.Password);
+    }
+
+    [Fact]
     public async Task Put_replaces_the_existing_key()
     {
         await using var factory = new SettingsApiFactory();
@@ -221,6 +290,7 @@ public sealed class SettingsTests
                     ["Grammar:ApplyMigrationsOnStartup"] = "false",
                     ["Settings:ApplyMigrationsOnStartup"] = "false",
                     ["Settings:EncryptionKey"] = _encryptionKey,
+                    ["Settings:InternalToken"] = "internal-test-token",
                     ["AudioExtraction:StorageEndpoint"] = "http://localhost:9000",
                     ["AudioExtraction:StorageAccessKey"] = "test-access-key",
                     ["AudioExtraction:StorageSecretKey"] = "test-secret-key",

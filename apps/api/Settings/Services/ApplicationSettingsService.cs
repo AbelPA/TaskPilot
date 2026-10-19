@@ -1,4 +1,5 @@
 using Api.AudioExtractions.Configuration;
+using System.Text.Json;
 using Api.Settings.Contracts;
 using Api.Settings.Persistence;
 using Api.Settings.Security;
@@ -15,6 +16,7 @@ public sealed class ApplicationSettingsService(
     ILogger<ApplicationSettingsService> logger)
 {
     public const string YouTubeApiKeyName = "youtube-data-api-key";
+    public const string YouTubeAccountName = "youtube-account";
 
     public async Task<YouTubeApiKeyStatus> GetYouTubeApiKeyStatusAsync(CancellationToken cancellationToken)
     {
@@ -87,5 +89,81 @@ public sealed class ApplicationSettingsService(
         return string.IsNullOrWhiteSpace(audioOptions.Value.YouTubeApiKey)
             ? null
             : audioOptions.Value.YouTubeApiKey;
+    }
+
+    public async Task<YouTubeAccountStatus> GetYouTubeAccountStatusAsync(CancellationToken cancellationToken)
+    {
+        var credentials = await GetYouTubeAccountAsync(cancellationToken);
+        if (credentials is null)
+        {
+            return new YouTubeAccountStatus(false, null, null);
+        }
+
+        var updatedAt = await dbContext.Settings
+            .AsNoTracking()
+            .Where(setting => setting.Key == YouTubeAccountName)
+            .Select(setting => (DateTimeOffset?)setting.UpdatedAt)
+            .SingleOrDefaultAsync(cancellationToken);
+        return new YouTubeAccountStatus(true, credentials.Username, updatedAt);
+    }
+
+    public async Task SaveYouTubeAccountAsync(
+        string username,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        var protectedValue = protector.Protect(
+            YouTubeAccountName,
+            JsonSerializer.Serialize(new YouTubeAccountCredentials(username, password)));
+        var setting = await dbContext.Settings
+            .SingleOrDefaultAsync(item => item.Key == YouTubeAccountName, cancellationToken);
+        if (setting is null)
+        {
+            dbContext.Settings.Add(new AppSettingEntity
+            {
+                Key = YouTubeAccountName,
+                ProtectedValue = protectedValue,
+                UpdatedAt = timeProvider.GetUtcNow(),
+            });
+        }
+        else
+        {
+            setting.ProtectedValue = protectedValue;
+            setting.UpdatedAt = timeProvider.GetUtcNow();
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<bool> RemoveYouTubeAccountAsync(CancellationToken cancellationToken)
+    {
+        var removed = await dbContext.Settings
+            .Where(setting => setting.Key == YouTubeAccountName)
+            .ExecuteDeleteAsync(cancellationToken);
+        return removed > 0;
+    }
+
+    public async Task<YouTubeAccountCredentials?> GetYouTubeAccountAsync(CancellationToken cancellationToken)
+    {
+        var protectedValue = await dbContext.Settings
+            .AsNoTracking()
+            .Where(setting => setting.Key == YouTubeAccountName)
+            .Select(setting => setting.ProtectedValue)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (protectedValue is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<YouTubeAccountCredentials>(
+                protector.Unprotect(YouTubeAccountName, protectedValue));
+        }
+        catch (Exception exception) when (exception is SecretProtectionException or JsonException)
+        {
+            logger.LogError(exception, "The stored YouTube account could not be read.");
+            return null;
+        }
     }
 }

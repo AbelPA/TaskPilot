@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -10,14 +11,18 @@ from audio_worker.media.ffmpeg_processor import (
     extract_audio,
 )
 from audio_worker.media.video_downloader import (
+    VideoAuthenticationRequiredError,
     VideoDownloadError,
     VideoUnavailableError,
     download_video,
 )
+from audio_worker.media.youtube_session import YouTubeLoginError, YouTubeSession
 from audio_worker.messaging.consumer import ExtractionRequest, TransientProcessingError
 from audio_worker.messaging.publisher import publish_completed, publish_failed
 from audio_worker.storage.audio_storage import AudioStorage
 from audio_worker.storage.models import AudioStorageError, StoredAudio
+
+logger = logging.getLogger(__name__)
 
 
 class AudioExtractionService:
@@ -26,7 +31,9 @@ class AudioExtractionService:
         settings: WorkerSettings,
         storage: AudioStorage,
         outcome_exchange: Any,
+        youtube_session: YouTubeSession | None = None,
     ) -> None:
+        self._youtube_session = youtube_session
         self._settings = settings
         self._storage = storage
         self._outcome_exchange = outcome_exchange
@@ -63,12 +70,7 @@ class AudioExtractionService:
     async def _extract_and_store(self, request: ExtractionRequest) -> StoredAudio:
         with tempfile.TemporaryDirectory(prefix="audio-extraction-") as directory:
             root = Path(directory).resolve(strict=True)
-            source_path = await download_video(
-                request.video_id,
-                root,
-                self._settings.maximum_download_bytes,
-                self._settings.job_timeout_seconds,
-            )
+            source_path = await self._download(request.video_id, root)
             output_path = root / "audio.mp3"
             audio = await extract_audio(
                 source_path,
@@ -79,6 +81,40 @@ class AudioExtractionService:
                 self._settings.maximum_output_bytes,
             )
             return await self._storage.store(request.request_id, audio)
+
+    async def _download(self, video_id: str, root: Path) -> Path:
+        cookies_file = await self._cookie_file(root, refresh=False)
+        try:
+            return await self._download_with(video_id, root, cookies_file)
+        except VideoAuthenticationRequiredError:
+            if self._youtube_session is None:
+                raise
+        # The cached cookies are missing or expired: sign in again once and retry.
+        cookies_file = await self._cookie_file(root, refresh=True)
+        return await self._download_with(video_id, root, cookies_file)
+
+    async def _download_with(self, video_id: str, root: Path, cookies_file: Path | None) -> Path:
+        arguments = (
+            video_id,
+            root,
+            self._settings.maximum_download_bytes,
+            self._settings.job_timeout_seconds,
+        )
+        if cookies_file is None:
+            return await download_video(*arguments)
+        return await download_video(*arguments, cookies_file)
+
+    async def _cookie_file(self, root: Path, refresh: bool) -> Path | None:
+        if self._youtube_session is None:
+            return None
+        try:
+            return await self._youtube_session.prepare_cookie_file(root, refresh=refresh)
+        except YouTubeLoginError as error:
+            logger.warning("YouTube sign-in failed: %s", error)
+            return None
+        except Exception:
+            logger.exception("The YouTube session could not be prepared.")
+            return None
 
     async def _publish_completed(
         self,

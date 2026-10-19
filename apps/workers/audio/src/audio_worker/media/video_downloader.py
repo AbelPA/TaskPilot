@@ -17,11 +17,16 @@ class VideoUnavailableError(VideoDownloadError):
     pass
 
 
+class VideoAuthenticationRequiredError(VideoDownloadError):
+    pass
+
+
 async def download_video(
     video_id: str,
     destination_directory: Path,
     maximum_bytes: int,
     timeout_seconds: int,
+    cookies_file: Path | None = None,
 ) -> Path:
     if not VIDEO_ID_PATTERN.fullmatch(video_id):
         raise VideoDownloadError("A canonical YouTube video ID is required.")
@@ -30,6 +35,7 @@ async def download_video(
 
     root = destination_directory.resolve(strict=True)
     output_template = str(root / "source.%(ext)s")
+    cookie_arguments = ["--cookies", str(cookies_file)] if cookies_file is not None else []
     process = await asyncio.create_subprocess_exec(
         sys.executable,
         "-m",
@@ -46,6 +52,7 @@ async def download_video(
         "15",
         "--retries",
         "2",
+        *cookie_arguments,
         "--output",
         output_template,
         f"https://www.youtube.com/watch?v={video_id}",
@@ -64,6 +71,8 @@ async def download_video(
     if process.returncode != 0:
         if b"video unavailable" in stderr.lower():
             raise VideoUnavailableError("The requested video is unavailable.")
+        if b"sign in to confirm" in stderr.lower():
+            raise VideoAuthenticationRequiredError("YouTube requires an authenticated session.")
         detail = stderr.decode("utf-8", errors="replace").strip().splitlines()
         logger.warning(
             "yt-dlp exited with code %s: %s",
