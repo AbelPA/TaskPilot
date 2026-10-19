@@ -26,7 +26,10 @@ export function initializeOpenReplay(): void {
   const tracker = new Tracker({
     projectKey,
     respectDoNotTrack: true,
-    defaultInputMode: 2,
+    // 0 - plain, 1 - obscured, 2 - ignored
+    defaultInputMode: 0,
+    obscureTextNumbers: false,
+    obscureTextEmails: false,
     network: {
       capturePayload: false,
       captureInIframes: false,

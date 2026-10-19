@@ -65,6 +65,7 @@ Create a project in OpenReplay and set its project key as `OPENREPLAY_PROJECT_KE
 in TaskPilot's `.env`. Rebuild the web container with
 `docker compose up -d --build web`. The tracker uses OpenReplay Cloud's default
 ingest endpoint; recording stays disabled when the key is empty. Input values are
-excluded, and recording respects the browser's Do Not Track setting. See the
+recorded as plain text (`defaultInputMode: 0`), and text numbers and emails are not
+obscured; recording respects the browser's Do Not Track setting. See the
 [OpenReplay SDK privacy options](https://documentation.openreplay.com/en/sdk/constructor/)
 for details.
