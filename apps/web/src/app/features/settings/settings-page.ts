@@ -12,6 +12,7 @@ import { SettingsApiService, YouTubeAccountStatus, YouTubeApiKeyStatus } from '.
 })
 export class SettingsPage implements OnInit {
   private readonly api = inject(SettingsApiService);
+  protected readonly maskedValue = '••••••••••••';
   protected readonly status = signal<YouTubeApiKeyStatus | null>(null);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -147,6 +148,19 @@ export class SettingsPage implements OnInit {
       default:
         return 'Nenhuma chave configurada. A extração de áudio não funcionará até que ela seja informada.';
     }
+  }
+
+  protected maskUsername(username: string | null): string {
+    if (!username) {
+      return this.maskedValue;
+    }
+
+    const separator = username.lastIndexOf('@');
+    if (separator <= 0) {
+      return `${username[0]}••••••••`;
+    }
+
+    return `${username[0]}••••••••${username.slice(separator)}`;
   }
 
   private readProblem(error: HttpErrorResponse, fallback: string): string {

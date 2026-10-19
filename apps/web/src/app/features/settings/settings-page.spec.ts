@@ -94,6 +94,7 @@ describe('SettingsPage', () => {
     const fixture = await render({ getYouTubeApiKeyStatus: () => of(stored), removeYouTubeApiKey: remove });
     const element = fixture.nativeElement as HTMLElement;
 
+    expect(element.textContent).toContain('Chave configurada: ••••••••••••');
     element.querySelector<HTMLButtonElement>('.secondary-button')!.click();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -133,7 +134,9 @@ describe('SettingsPage', () => {
 
     expect(password.type).toBe('password');
     expect(save).toHaveBeenCalledWith('conta@example.com', 'Sup3r-secret');
-    expect(element.textContent).toContain('Conta configurada: conta@example.com');
+    expect(element.textContent).toContain('Conta configurada: c••••••••@example.com');
+    expect(element.textContent).toContain('Senha cadastrada: ••••••••••••');
+    expect(element.textContent).not.toContain('conta@example.com');
     expect(element.textContent).not.toContain('Sup3r-secret');
     expect(password.value).toBe('');
   });
