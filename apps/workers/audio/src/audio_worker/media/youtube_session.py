@@ -109,18 +109,22 @@ def login_with_chrome(account: YouTubeAccount, settings: YouTubeSessionSettings)
         "--disable-blink-features=AutomationControlled",
     ):
         options.add_argument(argument)
+    # Google rejects browsers that advertise automation ("This browser or app may not be secure").
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
     service = Service(executable_path=settings.chromedriver_path) if settings.chromedriver_path else Service()
 
     with tempfile.TemporaryDirectory(prefix="chrome-profile-") as profile:
         options.add_argument(f"--user-data-dir={profile}")
         driver = webdriver.Chrome(service=service, options=options)
         try:
+            _hide_automation(driver)
             wait = WebDriverWait(driver, LOGIN_TIMEOUT_SECONDS)
             driver.get(LOGIN_URL)
-            email = wait.until(conditions.visibility_of_element_located((By.CSS_SELECTOR, "input[type=email]")))
+            email = wait.until(conditions.visibility_of_element_located((By.CSS_SELECTOR, "input#identifierId")))
             email.send_keys(account.username, Keys.ENTER)
             password = wait.until(
-                conditions.visibility_of_element_located((By.CSS_SELECTOR, "input[type=password]"))
+                conditions.visibility_of_element_located((By.CSS_SELECTOR, "input[name=Passwd]"))
             )
             password.send_keys(account.password, Keys.ENTER)
             try:
@@ -134,9 +138,29 @@ def login_with_chrome(account: YouTubeAccount, settings: YouTubeSessionSettings)
             driver.get("https://accounts.google.com/")
             return cookies + driver.get_cookies()
         except TimeoutException as error:
-            raise YouTubeLoginError("The Google sign-in page did not respond as expected.") from error
+            raise YouTubeLoginError(
+                f"The Google sign-in page did not respond as expected ({_describe_page(driver)})."
+            ) from error
         finally:
             driver.quit()
+
+
+def _hide_automation(driver: Any) -> None:
+    driver.execute_cdp_cmd(
+        "Page.addScriptToEvaluateOnNewDocument",
+        {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
+    )
+    user_agent = driver.execute_script("return navigator.userAgent").replace("HeadlessChrome", "Chrome")
+    driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": user_agent})
+
+
+def _describe_page(driver: Any) -> str:
+    # Only the path and title are reported; queries and page text may carry account data.
+    try:
+        url = driver.current_url.split("?")[0]
+        return f"url={url}, title={driver.title!r}"
+    except Exception:
+        return "page state unavailable"
 
 
 class YouTubeSession:
