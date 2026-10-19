@@ -199,6 +199,10 @@ class YouTubeSession:
     async def _refresh(self) -> bool:
         account = await asyncio.to_thread(self._account_loader, self._settings)
         if account is None:
+            logger.warning(
+                "No YouTube account is configured; downloading without authentication. "
+                "Set the account on the Settings screen (/settings)."
+            )
             self._cache_file.unlink(missing_ok=True)
             return False
         logger.info("Signing in to YouTube with the configured account.")
