@@ -1,0 +1,71 @@
+# Local-only overrides for PostHog's upstream hobby Compose stack.
+# Loaded by scripts/start-posthog-local.sh from the ignored .local/posthog directory.
+services:
+  proxy:
+    ports: !override
+      - "127.0.0.1:8000:80"
+    environment:
+      CADDY_TLS_BLOCK: ""
+      CADDY_HOST: http://localhost
+
+  web:
+    environment:
+      SITE_URL: http://localhost:8000
+      LIVESTREAM_HOST: http://localhost:8000/livestream
+      OBJECT_STORAGE_PUBLIC_ENDPOINT: http://localhost:8000
+
+  worker:
+    environment:
+      SITE_URL: http://localhost:8000
+      OBJECT_STORAGE_PUBLIC_ENDPOINT: http://localhost:8000
+
+  plugins:
+    environment:
+      SITE_URL: http://localhost:8000
+      OBJECT_STORAGE_PUBLIC_ENDPOINT: http://localhost:8000
+
+  asyncmigrationscheck:
+    environment:
+      SITE_URL: http://localhost:8000
+
+  temporal-django-worker:
+    environment:
+      SITE_URL: http://localhost:8000
+
+  seaweedfs:
+    ports: !override
+      - "127.0.0.1:18333:8333"
+      - "127.0.0.1:19333:9333"
+
+  capture:
+    build: !reset null
+
+  capture-logs:
+    build: !reset null
+
+  replay-capture:
+    build: !reset null
+
+  property-defs-rs:
+    build: !reset null
+
+  property-defs-ai:
+    build: !reset null
+
+  personhog-replica:
+    build: !reset null
+
+  personhog-router:
+    build: !reset null
+
+  feature-flags:
+    build: !reset null
+
+  hypercache-server:
+    build: !reset null
+
+  cymbal:
+    build: !reset null
+
+  cymbal-resolution:
+    build: !reset null

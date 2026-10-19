@@ -57,3 +57,28 @@ identifier. Prometheus metrics include HTTP request duration/counts and the
 worker's `audio_worker.processed` and `audio_worker.processing.duration`
 instruments. See [the distributed observability quickstart](specs/003-distributed-observability-poc/quickstart.md)
 for the end-to-end steps and troubleshooting.
+
+### Session replay with PostHog
+
+The web container supports PostHog session replay. The local Compose stack runs
+PostHog alongside TaskPilot at <http://localhost:8000>. Its first start downloads
+PostHog's current hobby Compose files and required configuration into the ignored
+`.local/posthog/` directory; those files remain separate from TaskPilot's Compose
+project so service names, volumes, and ports do not collide. PostHog's hobby stack
+requires at least 8 GB of memory. See the [official self-hosting guide](https://posthog.com/docs/self-host).
+
+Start the whole local stack as usual:
+
+```bash
+./scripts/start-local.sh
+```
+
+Open <http://localhost:8000>, create a project, and enable **Record user
+sessions** in its settings. Set `POSTHOG_PROJECT_TOKEN` in TaskPilot's `.env` to
+that project's token, then rebuild the web container with
+`docker compose up -d --build web`. `POSTHOG_HOST` defaults to
+`http://localhost:8000`; browser capture stays disabled while the project token
+is empty. The browser SDK masks form inputs by default; review PostHog's
+[privacy guidance](https://posthog.com/docs/privacy) before collecting real user sessions.
+Stop only PostHog with `./scripts/stop-posthog-local.sh`; its data volumes are
+preserved.

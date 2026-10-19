@@ -126,6 +126,9 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    environment:
+      POSTHOG_PROJECT_TOKEN: ${POSTHOG_PROJECT_TOKEN:-}
+      POSTHOG_HOST: ${POSTHOG_HOST:-}
     ports:
       - "4200:80"
 

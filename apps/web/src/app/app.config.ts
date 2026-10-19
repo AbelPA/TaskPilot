@@ -4,10 +4,12 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { initializeTelemetry } from './observability';
+import { initializePostHog } from './posthog';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideAppInitializer(initializeTelemetry),
+    provideAppInitializer(initializePostHog),
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(),
     provideRouter(routes),

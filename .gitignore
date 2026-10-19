@@ -60,3 +60,4 @@ apps/workers/audio/src/audio_worker/__pycache__/
 
 # Others
 /graphify-out/cache/
+/.local/posthog/
