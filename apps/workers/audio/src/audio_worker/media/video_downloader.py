@@ -71,7 +71,8 @@ async def download_video(
     if process.returncode != 0:
         if b"video unavailable" in stderr.lower():
             raise VideoUnavailableError("The requested video is unavailable.")
-        if b"sign in to confirm" in stderr.lower():
+        lowered = stderr.lower()
+        if b"sign in to confirm" in lowered or b"page needs to be reloaded" in lowered:
             raise VideoAuthenticationRequiredError("YouTube requires an authenticated session.")
         detail = stderr.decode("utf-8", errors="replace").strip().splitlines()
         logger.warning(
