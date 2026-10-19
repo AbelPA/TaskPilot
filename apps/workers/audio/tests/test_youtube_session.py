@@ -9,10 +9,46 @@ from audio_worker.media.youtube_session import (
     YouTubeAccount,
     YouTubeSession,
     YouTubeSessionSettings,
+    _diagnose_login_failure,
     to_netscape,
 )
 
 VIDEO_ID = "8t11Lxbm8LA"
+
+
+class _FakePage:
+    def __init__(self, url, title="Sign in", source=""):
+        self.current_url = url
+        self.title = title
+        self.page_source = source
+
+
+@pytest.mark.parametrize(
+    ("url", "source", "expected"),
+    [
+        ("https://accounts.google.com/v3/signin/challenge/pwd?x=1", "<div>Wrong password. Try again</div>", "rejected the password"),
+        ("https://accounts.google.com/v3/signin/identifier", "Couldn't find your Google Account", "did not find an account"),
+        ("https://accounts.google.com/v3/signin/challenge/totp", "", "authenticator app"),
+        ("https://accounts.google.com/v3/signin/challenge/ipp/consent", "", "SMS code"),
+        ("https://accounts.google.com/v3/signin/challenge/dp", "", "trusted device"),
+        ("https://accounts.google.com/v3/signin/rejected", "", "suspicious or from an unsafe browser"),
+        ("https://accounts.google.com/somewhere", "", "unrecognised page"),
+    ],
+)
+def test_login_failure_diagnosis_names_the_cause_without_leaking_the_query(url, source, expected):
+    message = _diagnose_login_failure(_FakePage(url, source=source))
+
+    assert expected in message
+    assert "x=1" not in message
+
+
+def test_login_failure_diagnosis_handles_unavailable_page():
+    class Broken:
+        @property
+        def current_url(self):
+            raise RuntimeError("gone")
+
+    assert "could not be determined" in _diagnose_login_failure(Broken())
 
 
 def _settings(tmp_path):

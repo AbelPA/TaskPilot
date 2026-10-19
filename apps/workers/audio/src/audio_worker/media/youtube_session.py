@@ -137,7 +137,7 @@ def login_with_chrome(account: YouTubeAccount, settings: YouTubeSessionSettings)
                 wait.until(lambda current: "youtube.com" in (current.current_url.split("/")[2:3] or [""])[0])
             except TimeoutException as error:
                 raise YouTubeLoginError(
-                    "Google did not complete the sign-in (wrong password, 2-step verification or a challenge)."
+                    f"Google did not complete the sign-in: {_diagnose_login_failure(driver)}"
                 ) from error
             # robots.txt loads no player page, so YouTube does not rotate the session cookies
             # before they are exported.
@@ -159,6 +159,42 @@ def _hide_automation(driver: Any) -> None:
     )
     user_agent = driver.execute_script("return navigator.userAgent").replace("HeadlessChrome", "Chrome")
     driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": user_agent})
+
+
+_CHALLENGES = (
+    ("/challenge/pwd", "Google asked for the password again"),
+    ("/challenge/totp", "2-step verification requires a code from an authenticator app"),
+    ("/challenge/ipp", "2-step verification requires an SMS code"),
+    ("/challenge/sq", "Google asked a security question"),
+    ("/challenge/dp", "2-step verification requires approval on a trusted device"),
+    ("/challenge/selection", "2-step verification requires choosing a verification method"),
+    ("/challenge/recaptcha", "Google showed a CAPTCHA"),
+    ("/challenge/", "Google requested an additional verification step"),
+    ("/signin/rejected", "Google rejected the sign-in as suspicious or from an unsafe browser"),
+    ("/signin/v2/disabled", "the Google account is disabled"),
+    ("/speedbump", "Google requested an additional confirmation on the account"),
+    ("/signin/v2/identifier", "Google returned to the email step"),
+)
+_PASSWORD_REJECTED_MARKERS = ("wrong password", "incorrect password")
+_EMAIL_REJECTED_MARKERS = ("couldn't find your google account", "couldn’t find your google account")
+
+
+def _diagnose_login_failure(driver: Any) -> str:
+    # Reports only the matched cause and the page path/title; page text may carry account data.
+    description = _describe_page(driver)
+    try:
+        path = driver.current_url.split("?")[0].split("accounts.google.com")[-1]
+        page_text = (driver.page_source or "").lower()
+    except Exception:
+        return f"the cause could not be determined ({description})."
+    if any(marker in page_text for marker in _PASSWORD_REJECTED_MARKERS):
+        return f"Google rejected the password as wrong ({description})."
+    if any(marker in page_text for marker in _EMAIL_REJECTED_MARKERS):
+        return f"Google did not find an account for the configured email ({description})."
+    for fragment, cause in _CHALLENGES:
+        if fragment in path:
+            return f"{cause} ({description})."
+    return f"sign-in stopped on an unrecognised page ({description})."
 
 
 def _describe_page(driver: Any) -> str:
