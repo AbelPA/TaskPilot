@@ -1,7 +1,11 @@
 namespace Api.Settings.Contracts;
 
-// The password is never returned by the public API.
-public sealed record YouTubeAccountStatus(bool Configured, string? Username, DateTimeOffset? UpdatedAt);
+// The username and password are only returned masked by the public API.
+public sealed record YouTubeAccountStatus(
+    bool Configured,
+    string? MaskedUsername,
+    string? MaskedPassword,
+    DateTimeOffset? UpdatedAt);
 
 public sealed record SaveYouTubeAccountRequest(string? Username, string? Password);
 

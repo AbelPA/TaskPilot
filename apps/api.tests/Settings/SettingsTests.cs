@@ -8,6 +8,7 @@ using Api.Settings.Configuration;
 using Api.Settings.Contracts;
 using Api.Settings.Persistence;
 using Api.Settings.Security;
+using Api.Settings.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -65,6 +66,18 @@ public sealed class SettingsTests
     public void Protector_requires_a_valid_256_bit_key(string masterKey) =>
         Assert.Throws<SecretProtectionException>(() => NewProtector(masterKey).Protect("purpose", ValidKey));
 
+    [Theory]
+    [InlineData("AIzaSyTestKey-1234567890_abcdef", "AIzaS*********def")]
+    [InlineData("abcdefghij", "ab*********ij")]
+    public void MaskApiKey_keeps_only_the_edges(string key, string expected) =>
+        Assert.Equal(expected, SecretMasking.MaskApiKey(key));
+
+    [Theory]
+    [InlineData("tpedropa@gmail.com", "tp***pa@gmail.com")]
+    [InlineData("ab@x.com", "a***@x.com")]
+    public void MaskUsername_keeps_the_domain(string username, string expected) =>
+        Assert.Equal(expected, SecretMasking.MaskUsername(username));
+
     [Fact]
     public async Task Put_stores_the_key_encrypted_and_never_returns_it()
     {
@@ -84,6 +97,8 @@ public sealed class SettingsTests
         Assert.True(status!.Configured);
         Assert.Equal("database", status.Source);
         Assert.NotNull(status.UpdatedAt);
+        Assert.Equal(SecretMasking.MaskApiKey(ValidKey), status.MaskedValue);
+        Assert.NotEqual(ValidKey, status.MaskedValue);
 
         await using var scope = factory.Services.CreateAsyncScope();
         var stored = await scope.ServiceProvider.GetRequiredService<SettingsDbContext>()
@@ -108,7 +123,8 @@ public sealed class SettingsTests
         Assert.DoesNotContain("s3cret-Password!", await response.Content.ReadAsStringAsync());
         var status = await client.GetFromJsonAsync<YouTubeAccountStatus>("/api/settings/youtube-account");
         Assert.True(status!.Configured);
-        Assert.Equal("worker@example.com", status.Username);
+        Assert.Equal("wo***er@example.com", status.MaskedUsername);
+        Assert.Equal(SecretMasking.MaskedPassword, status.MaskedPassword);
 
         await using var scope = factory.Services.CreateAsyncScope();
         var stored = await scope.ServiceProvider.GetRequiredService<SettingsDbContext>().Settings.SingleAsync();
@@ -225,7 +241,9 @@ public sealed class SettingsTests
         var provider = factory.Services.GetRequiredService<IYouTubeApiKeyProvider>();
 
         var initial = await client.GetFromJsonAsync<YouTubeApiKeyStatus>("/api/settings/youtube-api-key");
-        Assert.Equal(new YouTubeApiKeyStatus(true, "environment", null), initial);
+        Assert.Equal(
+            new YouTubeApiKeyStatus(true, "environment", null, SecretMasking.MaskApiKey("environment-key-1234567890")),
+            initial);
         Assert.Equal("environment-key-1234567890", await provider.GetApiKeyAsync(CancellationToken.None));
 
         await client.PutAsJsonAsync("/api/settings/youtube-api-key", new SaveYouTubeApiKeyRequest(ValidKey));

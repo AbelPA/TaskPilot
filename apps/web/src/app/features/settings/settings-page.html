@@ -15,26 +15,23 @@
       <h2>YouTube Data API</h2>
       <p class="hint">
         Necessária para validar a duração dos vídeos antes da extração de áudio. O valor é
-        criptografado antes de ser salvo e exibido apenas de forma mascarada.
+        criptografado antes de ser salvo e exibido apenas de forma mascarada. Para substituir, selecione o campo e informe a nova chave.
       </p>
 
       <p class="status" [class.configured]="status()!.configured" role="status">
         {{ describeSource(status()!) }}
-        @if (status()!.configured) {
-          <br />
-          Chave configurada: <span class="masked-value">{{ maskedValue }}</span>
-        }
       </p>
 
       <label for="youtube-api-key">Chave de API (YOUTUBE_DATA_API_KEY)</label>
       <input
         id="youtube-api-key"
         name="apiKey"
-        type="password"
+        type="text"
         autocomplete="off"
         spellcheck="false"
         maxlength="256"
         placeholder="Cole a nova chave aqui"
+        (focus)="$any($event.target).select()"
         [(ngModel)]="apiKey"
         required
       />
@@ -47,7 +44,7 @@
       }
 
       <div class="actions">
-        <button type="submit" class="primary-button" [disabled]="saving() || !apiKey.trim()">
+        <button type="submit" class="primary-button" [disabled]="saving() || !keyChanged">
           {{ saving() ? 'Salvando…' : status()!.source === 'database' ? 'Substituir chave' : 'Salvar chave' }}
         </button>
         @if (status()!.source === 'database') {
@@ -68,9 +65,7 @@
 
       <p class="status" [class.configured]="accountStatus()?.configured" role="status">
         @if (accountStatus()?.configured) {
-          Conta configurada: {{ maskUsername(accountStatus()!.username) }}.
-          <br />
-          Senha cadastrada: <span class="masked-value">{{ maskedValue }}</span>
+          Conta configurada. Para substituir, informe novamente usuário e senha.
         } @else {
           Nenhuma conta configurada. Vídeos que exigem autenticação não poderão ser extraídos.
         }
@@ -80,11 +75,12 @@
       <input
         id="youtube-account-username"
         name="accountUsername"
-        type="email"
+        type="text"
         autocomplete="off"
         spellcheck="false"
         maxlength="254"
         placeholder="conta.secundaria@gmail.com"
+        (focus)="$any($event.target).select()"
         [(ngModel)]="accountUsername"
         required
       />
@@ -97,6 +93,7 @@
         autocomplete="new-password"
         maxlength="256"
         placeholder="Digite a senha da conta"
+        (focus)="$any($event.target).select()"
         [(ngModel)]="accountPassword"
         required
       />
@@ -112,7 +109,7 @@
         <button
           type="submit"
           class="primary-button"
-          [disabled]="accountSaving() || !accountUsername.trim() || !accountPassword"
+          [disabled]="accountSaving() || !accountChanged"
         >
           {{ accountSaving() ? 'Salvando…' : accountStatus()?.configured ? 'Substituir conta' : 'Salvar conta' }}
         </button>

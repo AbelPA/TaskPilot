@@ -4,14 +4,27 @@ import { of, throwError } from 'rxjs';
 import { SettingsApiService, YouTubeAccountStatus, YouTubeApiKeyStatus } from './settings-api.service';
 import { SettingsPage } from './settings-page';
 
-const none: YouTubeApiKeyStatus = { configured: false, source: 'none', updatedAt: null };
+const none: YouTubeApiKeyStatus = { configured: false, source: 'none', updatedAt: null, maskedValue: null };
 const stored: YouTubeApiKeyStatus = {
   configured: true,
   source: 'database',
   updatedAt: '2026-10-16T19:00:00Z',
+  maskedValue: 'AIzaS*********Vsw',
 };
 
-const noAccount: YouTubeAccountStatus = { configured: false, username: null, updatedAt: null };
+const noAccount: YouTubeAccountStatus = {
+  configured: false,
+  maskedUsername: null,
+  maskedPassword: null,
+  updatedAt: null,
+};
+
+const configuredAccount: YouTubeAccountStatus = {
+  configured: true,
+  maskedUsername: 'tp***pa@gmail.com',
+  maskedPassword: '*********************',
+  updatedAt: '2026-10-16T19:00:00Z',
+};
 
 async function render(api: Partial<SettingsApiService>) {
   await TestBed.configureTestingModule({
@@ -40,10 +53,25 @@ describe('SettingsPage', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.textContent).toContain('Nenhuma chave configurada');
     expect(element.querySelector('.secondary-button')).toBeNull();
-    expect(element.querySelector<HTMLInputElement>('#youtube-api-key')?.type).toBe('password');
+    expect(element.querySelector<HTMLInputElement>('#youtube-api-key')?.value).toBe('');
+    expect(element.querySelector<HTMLInputElement>('#youtube-account-username')?.value).toBe('');
+    expect(element.querySelector<HTMLInputElement>('#youtube-account-password')?.value).toBe('');
   });
 
-  it('saves the key, clears the field and never renders the value', async () => {
+  it('shows the configured values masked in the fields', async () => {
+    const fixture = await render({
+      getYouTubeApiKeyStatus: () => of(stored),
+      getYouTubeAccountStatus: () => of(configuredAccount),
+    });
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector<HTMLInputElement>('#youtube-api-key')!.value).toBe('AIzaS*********Vsw');
+    expect(element.querySelector<HTMLInputElement>('#youtube-account-username')!.value).toBe('tp***pa@gmail.com');
+    expect(element.querySelector<HTMLInputElement>('#youtube-account-password')!.value).toBe('*********************');
+    element.querySelectorAll<HTMLButtonElement>('[type="submit"]').forEach(button => expect(button.disabled).toBe(true));
+  });
+
+  it('saves the key and shows only its masked value afterwards', async () => {
     const save = vi.fn(() => of(stored));
     const fixture = await render({ getYouTubeApiKeyStatus: () => of(none), saveYouTubeApiKey: save });
     const element = fixture.nativeElement as HTMLElement;
@@ -60,7 +88,7 @@ describe('SettingsPage', () => {
     expect(element.textContent).toContain('Chave salva com segurança.');
     expect(element.textContent).toContain('criptografada');
     expect(element.textContent).not.toContain('secret-key-1234567890');
-    expect(input.value).toBe('');
+    expect(input.value).toBe('AIzaS*********Vsw');
   });
 
   it('disables saving while the field is empty', async () => {
@@ -94,7 +122,6 @@ describe('SettingsPage', () => {
     const fixture = await render({ getYouTubeApiKeyStatus: () => of(stored), removeYouTubeApiKey: remove });
     const element = fixture.nativeElement as HTMLElement;
 
-    expect(element.textContent).toContain('Chave configurada: ••••••••••••');
     element.querySelector<HTMLButtonElement>('.secondary-button')!.click();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -102,6 +129,7 @@ describe('SettingsPage', () => {
     expect(remove).toHaveBeenCalled();
     expect(element.textContent).toContain('Chave removida.');
     expect(element.querySelector('.secondary-button')).toBeNull();
+    expect(element.querySelector<HTMLInputElement>('#youtube-api-key')!.value).toBe('');
   });
 
   it('offers a retry when loading fails', async () => {
@@ -114,9 +142,9 @@ describe('SettingsPage', () => {
     expect(element.querySelector('.primary-button')?.textContent).toContain('Tentar novamente');
   });
 
-  it('saves the YouTube account, clears the password and never renders it', async () => {
+  it('saves the YouTube account and shows its masked values afterwards', async () => {
     const save = vi.fn(() =>
-      of({ configured: true, username: 'conta@example.com', updatedAt: '2026-10-16T19:00:00Z' }),
+      of({ ...configuredAccount, maskedUsername: 'co***ta@example.com' }),
     );
     const fixture = await render({ getYouTubeApiKeyStatus: () => of(none), saveYouTubeAccount: save });
     const element = fixture.nativeElement as HTMLElement;
@@ -134,10 +162,8 @@ describe('SettingsPage', () => {
 
     expect(password.type).toBe('password');
     expect(save).toHaveBeenCalledWith('conta@example.com', 'Sup3r-secret');
-    expect(element.textContent).toContain('Conta configurada: c••••••••@example.com');
-    expect(element.textContent).toContain('Senha cadastrada: ••••••••••••');
-    expect(element.textContent).not.toContain('conta@example.com');
+    expect(username.value).toBe('co***ta@example.com');
     expect(element.textContent).not.toContain('Sup3r-secret');
-    expect(password.value).toBe('');
+    expect(password.value).toBe('*********************');
   });
 });

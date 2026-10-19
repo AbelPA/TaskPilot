@@ -20,19 +20,33 @@ public sealed class ApplicationSettingsService(
 
     public async Task<YouTubeApiKeyStatus> GetYouTubeApiKeyStatusAsync(CancellationToken cancellationToken)
     {
-        var updatedAt = await dbContext.Settings
+        var stored = await dbContext.Settings
             .AsNoTracking()
             .Where(setting => setting.Key == YouTubeApiKeyName)
-            .Select(setting => (DateTimeOffset?)setting.UpdatedAt)
+            .Select(setting => new { setting.UpdatedAt, setting.ProtectedValue })
             .SingleOrDefaultAsync(cancellationToken);
-        if (updatedAt is not null)
+        if (stored is not null)
         {
-            return new YouTubeApiKeyStatus(true, "database", updatedAt);
+            string? masked = null;
+            try
+            {
+                masked = SecretMasking.MaskApiKey(protector.Unprotect(YouTubeApiKeyName, stored.ProtectedValue));
+            }
+            catch (SecretProtectionException exception)
+            {
+                logger.LogError(exception, "The stored YouTube API key could not be read.");
+            }
+
+            return new YouTubeApiKeyStatus(true, "database", stored.UpdatedAt, masked);
         }
 
         return string.IsNullOrWhiteSpace(audioOptions.Value.YouTubeApiKey)
             ? new YouTubeApiKeyStatus(false, "none", null)
-            : new YouTubeApiKeyStatus(true, "environment", null);
+            : new YouTubeApiKeyStatus(
+                true,
+                "environment",
+                null,
+                SecretMasking.MaskApiKey(audioOptions.Value.YouTubeApiKey));
     }
 
     public async Task SaveYouTubeApiKeyAsync(string apiKey, CancellationToken cancellationToken)
@@ -96,7 +110,7 @@ public sealed class ApplicationSettingsService(
         var credentials = await GetYouTubeAccountAsync(cancellationToken);
         if (credentials is null)
         {
-            return new YouTubeAccountStatus(false, null, null);
+            return new YouTubeAccountStatus(false, null, null, null);
         }
 
         var updatedAt = await dbContext.Settings
@@ -104,7 +118,11 @@ public sealed class ApplicationSettingsService(
             .Where(setting => setting.Key == YouTubeAccountName)
             .Select(setting => (DateTimeOffset?)setting.UpdatedAt)
             .SingleOrDefaultAsync(cancellationToken);
-        return new YouTubeAccountStatus(true, credentials.Username, updatedAt);
+        return new YouTubeAccountStatus(
+            true,
+            SecretMasking.MaskUsername(credentials.Username),
+            SecretMasking.MaskedPassword,
+            updatedAt);
     }
 
     public async Task SaveYouTubeAccountAsync(

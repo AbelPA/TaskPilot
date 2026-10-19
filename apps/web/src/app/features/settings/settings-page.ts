@@ -12,7 +12,9 @@ import { SettingsApiService, YouTubeAccountStatus, YouTubeApiKeyStatus } from '.
 })
 export class SettingsPage implements OnInit {
   private readonly api = inject(SettingsApiService);
-  protected readonly maskedValue = '••••••••••••';
+  protected maskedValue = '';
+  protected maskedUsername = '';
+  protected maskedPassword = '';
   protected readonly status = signal<YouTubeApiKeyStatus | null>(null);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -32,14 +34,14 @@ export class SettingsPage implements OnInit {
 
   protected loadStatus(): void {
     this.api.getYouTubeAccountStatus().subscribe({
-      next: status => this.accountStatus.set(status),
+      next: status => this.applyAccountStatus(status),
       error: () => this.accountError.set('Não foi possível carregar a conta do YouTube.'),
     });
     this.loading.set(true);
     this.errorMessage.set('');
     this.api.getYouTubeApiKeyStatus().subscribe({
       next: status => {
-        this.status.set(status);
+        this.applyKeyStatus(status);
         this.loading.set(false);
       },
       error: () => {
@@ -49,9 +51,24 @@ export class SettingsPage implements OnInit {
     });
   }
 
+  protected get keyChanged(): boolean {
+    const value = this.apiKey.trim();
+    return !!value && value !== this.maskedValue;
+  }
+
+  protected get accountChanged(): boolean {
+    const username = this.accountUsername.trim();
+    return (
+      !!username &&
+      !!this.accountPassword &&
+      username !== this.maskedUsername &&
+      this.accountPassword !== this.maskedPassword
+    );
+  }
+
   protected save(): void {
     const value = this.apiKey.trim();
-    if (!value || this.saving()) {
+    if (!this.keyChanged || this.saving()) {
       return;
     }
 
@@ -60,8 +77,7 @@ export class SettingsPage implements OnInit {
     this.successMessage.set('');
     this.api.saveYouTubeApiKey(value).subscribe({
       next: status => {
-        this.apiKey = '';
-        this.status.set(status);
+        this.applyKeyStatus(status);
         this.saving.set(false);
         this.successMessage.set('Chave salva com segurança.');
       },
@@ -82,7 +98,7 @@ export class SettingsPage implements OnInit {
     this.successMessage.set('');
     this.api.removeYouTubeApiKey().subscribe({
       next: status => {
-        this.status.set(status);
+        this.applyKeyStatus(status);
         this.saving.set(false);
         this.successMessage.set('Chave removida.');
       },
@@ -95,7 +111,7 @@ export class SettingsPage implements OnInit {
 
   protected saveAccount(): void {
     const username = this.accountUsername.trim();
-    if (!username || !this.accountPassword || this.accountSaving()) {
+    if (!this.accountChanged || this.accountSaving()) {
       return;
     }
 
@@ -104,8 +120,7 @@ export class SettingsPage implements OnInit {
     this.accountSuccess.set('');
     this.api.saveYouTubeAccount(username, this.accountPassword).subscribe({
       next: status => {
-        this.accountPassword = '';
-        this.accountStatus.set(status);
+        this.applyAccountStatus(status);
         this.accountSaving.set(false);
         this.accountSuccess.set('Conta salva com segurança.');
       },
@@ -126,9 +141,7 @@ export class SettingsPage implements OnInit {
     this.accountSuccess.set('');
     this.api.removeYouTubeAccount().subscribe({
       next: status => {
-        this.accountUsername = '';
-        this.accountPassword = '';
-        this.accountStatus.set(status);
+        this.applyAccountStatus(status);
         this.accountSaving.set(false);
         this.accountSuccess.set('Conta removida.');
       },
@@ -150,17 +163,18 @@ export class SettingsPage implements OnInit {
     }
   }
 
-  protected maskUsername(username: string | null): string {
-    if (!username) {
-      return this.maskedValue;
-    }
+  private applyKeyStatus(status: YouTubeApiKeyStatus): void {
+    this.status.set(status);
+    this.maskedValue = status.maskedValue ?? '';
+    this.apiKey = this.maskedValue;
+  }
 
-    const separator = username.lastIndexOf('@');
-    if (separator <= 0) {
-      return `${username[0]}••••••••`;
-    }
-
-    return `${username[0]}••••••••${username.slice(separator)}`;
+  private applyAccountStatus(status: YouTubeAccountStatus): void {
+    this.accountStatus.set(status);
+    this.maskedUsername = status.maskedUsername ?? '';
+    this.maskedPassword = status.maskedPassword ?? '';
+    this.accountUsername = this.maskedUsername;
+    this.accountPassword = this.maskedPassword;
   }
 
   private readProblem(error: HttpErrorResponse, fallback: string): string {

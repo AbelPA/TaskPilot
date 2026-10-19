@@ -41,6 +41,6 @@ describe('SettingsApiService', () => {
     api.saveYouTubeAccount('conta@example.com', 'Sup3r-secret').subscribe();
     const request = http.expectOne({ method: 'PUT', url: '/api/settings/youtube-account' });
     expect(request.request.body).toEqual({ username: 'conta@example.com', password: 'Sup3r-secret' });
-    request.flush({ configured: true, username: 'conta@example.com', updatedAt: null });
+    request.flush({ configured: true, maskedUsername: 'co***ta@example.com', maskedPassword: '***', updatedAt: null });
   });
 });

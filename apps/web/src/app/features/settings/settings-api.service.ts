@@ -6,11 +6,13 @@ export interface YouTubeApiKeyStatus {
   configured: boolean;
   source: 'database' | 'environment' | 'none';
   updatedAt: string | null;
+  maskedValue?: string | null;
 }
 
 export interface YouTubeAccountStatus {
   configured: boolean;
-  username: string | null;
+  maskedUsername: string | null;
+  maskedPassword: string | null;
   updatedAt: string | null;
 }
 
