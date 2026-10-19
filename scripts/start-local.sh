@@ -65,6 +65,11 @@ if ! grep -Eq '^SETTINGS_ENCRYPTION_KEY=.+' "$ROOT_DIR/.env"; then
   printf 'Gerada SETTINGS_ENCRYPTION_KEY no .env (protege as configurações salvas no banco).\n'
 fi
 
+if ! grep -Eq '^INTERNAL_API_TOKEN=.+' "$ROOT_DIR/.env"; then
+  printf '\nINTERNAL_API_TOKEN=%s\n' "$(openssl rand -hex 32)" >>"$ROOT_DIR/.env"
+  printf 'Gerado INTERNAL_API_TOKEN no .env (autentica o worker na API).\n'
+fi
+
 cd "$ROOT_DIR"
 printf '\nIniciando a aplicação e suas dependências...\n'
 docker compose up --detach --build --wait

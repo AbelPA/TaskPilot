@@ -36,4 +36,11 @@ describe('SettingsApiService', () => {
       .expectOne({ method: 'DELETE', url: '/api/settings/youtube-api-key' })
       .flush({ configured: false, source: 'none', updatedAt: null });
   });
+
+  it('sends the account credentials in the request body, not in the URL', () => {
+    api.saveYouTubeAccount('conta@example.com', 'Sup3r-secret').subscribe();
+    const request = http.expectOne({ method: 'PUT', url: '/api/settings/youtube-account' });
+    expect(request.request.body).toEqual({ username: 'conta@example.com', password: 'Sup3r-secret' });
+    request.flush({ configured: true, username: 'conta@example.com', updatedAt: null });
+  });
 });

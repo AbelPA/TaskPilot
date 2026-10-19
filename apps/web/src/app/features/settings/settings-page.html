@@ -53,5 +53,69 @@
         }
       </div>
     </form>
+
+    <form class="card" (ngSubmit)="saveAccount()" autocomplete="off">
+      <h2>Conta do YouTube</h2>
+      <p class="hint">
+        Usada pelo worker para entrar no YouTube por um navegador (Chrome) e obter os cookies exigidos
+        quando o YouTube pede confirmação de que não é um robô. Use uma conta secundária, sem
+        verificação em duas etapas. A senha é criptografada antes de ser salva e nunca é exibida novamente.
+      </p>
+
+      <p class="status" [class.configured]="accountStatus()?.configured" role="status">
+        @if (accountStatus()?.configured) {
+          Conta configurada: {{ accountStatus()!.username }}.
+        } @else {
+          Nenhuma conta configurada. Vídeos que exigem autenticação não poderão ser extraídos.
+        }
+      </p>
+
+      <label for="youtube-account-username">Usuário (e-mail)</label>
+      <input
+        id="youtube-account-username"
+        name="accountUsername"
+        type="email"
+        autocomplete="off"
+        spellcheck="false"
+        maxlength="254"
+        placeholder="conta.secundaria@gmail.com"
+        [(ngModel)]="accountUsername"
+        required
+      />
+
+      <label for="youtube-account-password">Senha</label>
+      <input
+        id="youtube-account-password"
+        name="accountPassword"
+        type="password"
+        autocomplete="new-password"
+        maxlength="256"
+        placeholder="Digite a senha da conta"
+        [(ngModel)]="accountPassword"
+        required
+      />
+
+      @if (accountError()) {
+        <p class="notice error" role="alert">{{ accountError() }}</p>
+      }
+      @if (accountSuccess()) {
+        <p class="notice success" role="status">{{ accountSuccess() }}</p>
+      }
+
+      <div class="actions">
+        <button
+          type="submit"
+          class="primary-button"
+          [disabled]="accountSaving() || !accountUsername.trim() || !accountPassword"
+        >
+          {{ accountSaving() ? 'Salvando…' : accountStatus()?.configured ? 'Substituir conta' : 'Salvar conta' }}
+        </button>
+        @if (accountStatus()?.configured) {
+          <button type="button" class="secondary-button account-remove" [disabled]="accountSaving()" (click)="removeAccount()">
+            Remover conta salva
+          </button>
+        }
+      </div>
+    </form>
   }
 </section>

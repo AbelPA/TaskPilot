@@ -11,6 +11,7 @@ dependencies = [
     "opentelemetry-api>=1.31,<2",
     "opentelemetry-exporter-otlp-proto-http>=1.31,<2",
     "opentelemetry-sdk>=1.31,<2",
+    "selenium>=4.25,<5",
     "yt-dlp>=2025.1",
 ]
 
