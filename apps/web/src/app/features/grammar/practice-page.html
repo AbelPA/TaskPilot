@@ -19,9 +19,27 @@
       <p class="notice error" role="alert">{{ errorMessage() }}</p>
     }
 
+    @if (pendencies().length > 0) {
+      <div class="notice error" role="alert">
+        <p>Complete todos os exercícios para verificar as respostas. Pendências:</p>
+        <ul>
+          @for (pendency of pendencies(); track $index) {
+            <li>{{ pendency }}</li>
+          }
+        </ul>
+      </div>
+    }
+
     <div class="exercise-list">
-      @for (currentExercise of exercises(); track trackExercise($index, currentExercise); let index = $index) {
-        <article class="exercise-card" [attr.aria-labelledby]="'exercise-title-' + currentExercise.id">
+      @for (
+        currentExercise of exercises();
+        track trackExercise($index, currentExercise);
+        let index = $index
+      ) {
+        <article
+          class="exercise-card"
+          [attr.aria-labelledby]="'exercise-title-' + currentExercise.id"
+        >
           <header class="exercise-heading">
             <p class="eyebrow">Exercício {{ index + 1 }} de {{ exercises().length }}</p>
             <h2 [id]="'exercise-title-' + currentExercise.id">{{ currentExercise.title }}</h2>
@@ -35,7 +53,10 @@
                   <span>{{ segment.value }}</span>
                 } @else {
                   <span class="inline-answer">
-                    <label class="sr-only" [for]="'blank-' + currentExercise.id + '-' + segment.blank.key">
+                    <label
+                      class="sr-only"
+                      [for]="'blank-' + currentExercise.id + '-' + segment.blank.key"
+                    >
                       Lacuna {{ segment.blank.key }}
                     </label>
                     @if (segment.blank.inputType === 'select') {
@@ -62,7 +83,8 @@
                     }
                     @if (resultFor(currentExercise.id, segment.blank.key, 'blank'); as result) {
                       <span class="inline-result" [class.correct]="result.isCorrect">
-                        {{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta: {{ result.correctAnswer }}
+                        {{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta:
+                        {{ result.correctAnswer }}
                       </span>
                     }
                   </span>
@@ -75,7 +97,10 @@
               @for (question of currentExercise.questions; track trackQuestion($index, question)) {
                 <fieldset>
                   <legend>{{ question.prompt }}</legend>
-                  <label class="sr-only" [for]="'question-' + currentExercise.id + '-' + question.key">
+                  <label
+                    class="sr-only"
+                    [for]="'question-' + currentExercise.id + '-' + question.key"
+                  >
                     Resposta para {{ question.prompt }}
                   </label>
                   <select
@@ -91,7 +116,8 @@
                   </select>
                   @if (resultFor(currentExercise.id, question.key, 'question'); as result) {
                     <p class="inline-result" [class.correct]="result.isCorrect">
-                      {{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta: {{ result.correctAnswer }}
+                      {{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta:
+                      {{ result.correctAnswer }}
                     </p>
                   }
                 </fieldset>
@@ -100,18 +126,27 @@
           }
 
           @if (sessionResult(currentExercise.id); as result) {
-            <section class="result-panel" aria-live="polite" [attr.aria-labelledby]="'result-title-' + currentExercise.id">
+            <section
+              class="result-panel"
+              aria-live="polite"
+              [attr.aria-labelledby]="'result-title-' + currentExercise.id"
+            >
               <h3 [id]="'result-title-' + currentExercise.id">
-                Resultado: {{ result.score }} de {{ result.maxScore }} pontos ({{ result.percentage }}%)
+                Resultado: {{ result.score }} de {{ result.maxScore }} pontos ({{
+                  result.percentage
+                }}%)
               </h3>
               <p>{{ result.explanation }}</p>
               <ol class="result-list">
                 @for (item of result.results; track item.itemType + item.itemKey) {
                   <li>
-                    <strong>{{ item.itemType === 'blank' ? 'Lacuna' : 'Questão' }} {{ item.itemKey }}:</strong>
-                    {{ item.isCorrect ? 'Correta' : 'Incorreta' }}.
-                    Sua resposta: {{ item.submittedAnswer || 'sem resposta' }}.
-                    Resposta esperada: {{ item.correctAnswer }}.
+                    <strong
+                      >{{ item.itemType === 'blank' ? 'Lacuna' : 'Questão' }}
+                      {{ item.itemKey }}:</strong
+                    >
+                    {{ item.isCorrect ? 'Correta' : 'Incorreta' }}. Sua resposta:
+                    {{ item.submittedAnswer || 'sem resposta' }}. Resposta esperada:
+                    {{ item.correctAnswer }}.
                     {{ item.explanation }}
                   </li>
                 }

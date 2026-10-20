@@ -10,11 +10,7 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [
-        provideRouter(routes),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
   });
 
@@ -30,21 +26,31 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('nav')?.textContent).toContain('Extrair áudio');
     expect(compiled.querySelector('nav')?.textContent).toContain('Estudar gramática');
-    expect(compiled.querySelector('nav a[href="/settings"]')?.textContent).toContain('Configurações');
+    expect(compiled.querySelector('nav a[href="/grammar/statistics"]')?.textContent).toContain(
+      'Estatísticas',
+    );
+    expect(compiled.querySelector('nav a[href="/grammar/review"]')?.textContent).toContain(
+      'Revisão',
+    );
+    expect(compiled.querySelector('nav a[href="/settings"]')?.textContent).toContain(
+      'Configurações',
+    );
   });
 
   it('opens the first practice from the topic list in no more than three selections', async () => {
     const harness = await RouterTestingHarness.create('/grammar');
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne('/api/grammar/topics').flush([{
-      id: 'topic-1',
-      slug: 'present-simple',
-      title: 'Present Simple',
-      description: 'Verb to be',
-      level: 'A1',
-      displayOrder: 1,
-      exerciseCount: 1,
-    }]);
+    http.expectOne('/api/grammar/topics').flush([
+      {
+        id: 'topic-1',
+        slug: 'present-simple',
+        title: 'Present Simple',
+        description: 'Verb to be',
+        level: 'A1',
+        displayOrder: 1,
+        exerciseCount: 1,
+      },
+    ]);
     await harness.fixture.whenStable();
     harness.detectChanges();
 
@@ -75,13 +81,27 @@ describe('App', () => {
     harness.detectChanges();
 
     await selectLink('a[href="/grammar/present-simple/practice"]');
-    http.expectOne('/api/grammar/topics/present-simple/exercises').flush([{
-      id: 'exercise-1',
-      title: 'Verb to be',
-      exerciseType: 'fill_blank',
+    http.expectOne('/api/grammar/topics/present-simple').flush({
+      id: 'topic-1',
+      slug: 'present-simple',
+      title: 'Present Simple',
+      description: 'Verb to be',
+      level: 'A1',
       displayOrder: 1,
-      itemCount: 1,
-    }]);
+      exerciseCount: 1,
+      previousTopicSlug: null,
+      nextTopicSlug: null,
+      theorySections: [],
+    });
+    http.expectOne('/api/grammar/topics/present-simple/exercises').flush([
+      {
+        id: 'exercise-1',
+        title: 'Verb to be',
+        exerciseType: 'fill_blank',
+        displayOrder: 1,
+        itemCount: 1,
+      },
+    ]);
     http.expectOne('/api/grammar/exercises/exercise-1').flush({
       id: 'exercise-1',
       title: 'Verb to be',
@@ -89,20 +109,22 @@ describe('App', () => {
       exerciseType: 'fill_blank',
       contentTemplate: 'I {{blank:verb}} a student.',
       itemCount: 1,
-      blanks: [{
-        key: 'verb',
-        displayOrder: 1,
-        inputType: 'text',
-        points: 1,
-        options: [],
-      }],
+      blanks: [
+        {
+          key: 'verb',
+          displayOrder: 1,
+          inputType: 'text',
+          points: 1,
+          options: [],
+        },
+      ],
       questions: [],
     });
     await harness.fixture.whenStable();
     harness.detectChanges();
 
     expect(selections).toBeLessThanOrEqual(3);
-    expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Verb to be');
+    expect(harness.routeNativeElement?.querySelector('h2')?.textContent).toContain('Verb to be');
     http.verify();
   });
 });

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Api.Grammar.Services;
 
-public sealed class GrammarExerciseService(GrammarDbContext dbContext)
+public sealed class GrammarExerciseService(GrammarDbContext dbContext, GrammarSubmissionHistoryService history)
 {
     public async Task<GrammarExerciseResponse?> GetExerciseAsync(
         Guid exerciseId,
@@ -58,6 +58,8 @@ public sealed class GrammarExerciseService(GrammarDbContext dbContext)
         GrammarExerciseSubmission submission,
         CancellationToken cancellationToken)
     {
+        var replay = await history.FindReplayAsync(exerciseId, submission, cancellationToken);
+        if (replay is not null) return replay;
         var exercise = await LoadExerciseAsync(exerciseId, cancellationToken);
         if (exercise is null)
         {
@@ -146,13 +148,8 @@ public sealed class GrammarExerciseService(GrammarDbContext dbContext)
         var score = results.Sum(result => result.Points);
         var percentage = Math.Round(score / maxScore * 100m, 1, MidpointRounding.AwayFromZero);
 
-        return new GrammarExerciseResult(
-            exercise.Id,
-            score,
-            maxScore,
-            percentage,
-            exercise.Explanation,
-            results);
+        var evaluated = new GrammarExerciseResult(exercise.Id, score, maxScore, percentage, exercise.Explanation, results);
+        return await history.PersistAsync(exercise, submission, evaluated, cancellationToken);
     }
 
     private async Task<ExerciseEntity?> LoadExerciseAsync(Guid exerciseId, CancellationToken cancellationToken) =>

@@ -1,7 +1,14 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, distinctUntilChanged, forkJoin, map, of, tap } from 'rxjs';
+import { catchError, concat, distinctUntilChanged, forkJoin, map, of, tap, toArray } from 'rxjs';
 import {
   GrammarApiService,
   GrammarBlank,
@@ -15,9 +22,7 @@ import {
   GrammarSessionStore,
 } from './grammar-session.store';
 
-type PracticeSegment =
-  | { kind: 'text'; value: string }
-  | { kind: 'blank'; blank: GrammarBlank };
+type PracticeSegment = { kind: 'text'; value: string } | { kind: 'blank'; blank: GrammarBlank };
 
 @Component({
   selector: 'app-grammar-practice-page',
@@ -37,15 +42,16 @@ export class PracticePage implements OnInit {
   protected readonly loading = signal(true);
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal('');
+  protected readonly pendencies = signal<string[]>([]);
 
   ngOnInit(): void {
     this.route.paramMap
       .pipe(
-        map(params => params.get('slug') ?? ''),
+        map((params) => params.get('slug') ?? ''),
         distinctUntilChanged(),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(slug => {
+      .subscribe((slug) => {
         this.topicSlug.set(slug);
         this.loadExercises(slug);
       });
@@ -56,7 +62,7 @@ export class PracticePage implements OnInit {
       return [];
     }
 
-    const blanks = new Map(exercise.blanks.map(blank => [blank.key, blank]));
+    const blanks = new Map(exercise.blanks.map((blank) => [blank.key, blank]));
     const segments: PracticeSegment[] = [];
     const marker = /\{\{blank:([^{}]+)\}\}/g;
     let cursor = 0;
@@ -80,15 +86,19 @@ export class PracticePage implements OnInit {
   }
 
   protected answerForBlank(exerciseId: string, key: string): string {
-    return this.sessionStore.get(exerciseId).submission.blankAnswers.find(
-      answer => answer.blankKey === key,
-    )?.answer ?? '';
+    return (
+      this.sessionStore
+        .get(exerciseId)
+        .submission.blankAnswers.find((answer) => answer.blankKey === key)?.answer ?? ''
+    );
   }
 
   protected answerForQuestion(exerciseId: string, key: string): string {
-    return this.sessionStore.get(exerciseId).submission.questionAnswers.find(
-      answer => answer.questionKey === key,
-    )?.optionKey ?? '';
+    return (
+      this.sessionStore
+        .get(exerciseId)
+        .submission.questionAnswers.find((answer) => answer.questionKey === key)?.optionKey ?? ''
+    );
   }
 
   protected resultFor(
@@ -96,9 +106,9 @@ export class PracticePage implements OnInit {
     key: string,
     type: 'blank' | 'question',
   ): GrammarSessionItemResult | undefined {
-    return this.sessionStore.get(exerciseId).result?.results.find(
-      result => result.itemKey === key && result.itemType === type,
-    );
+    return this.sessionStore
+      .get(exerciseId)
+      .result?.results.find((result) => result.itemKey === key && result.itemType === type);
   }
 
   protected sessionResult(exerciseId: string): GrammarSessionResult | null {
@@ -109,6 +119,7 @@ export class PracticePage implements OnInit {
     const input = event.target;
     if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
       this.sessionStore.setAnswer(exerciseId, key, input.value);
+      this.pendencies.set([]);
     }
   }
 
@@ -116,6 +127,7 @@ export class PracticePage implements OnInit {
     const input = event.target;
     if (input instanceof HTMLSelectElement) {
       this.sessionStore.setQuestionAnswer(exerciseId, key, input.value);
+      this.pendencies.set([]);
     }
   }
 
@@ -125,37 +137,53 @@ export class PracticePage implements OnInit {
     }
 
     const pendingExercises = this.exercises().filter(
-      exercise => !this.sessionStore.get(exercise.id).result,
+      (exercise) => !this.sessionStore.get(exercise.id).result,
     );
     if (pendingExercises.length === 0) {
+      return;
+    }
+
+    const pendencies = this.findPendencies(pendingExercises);
+    this.pendencies.set(pendencies);
+    if (pendencies.length > 0) {
       return;
     }
 
     this.submitting.set(true);
     this.errorMessage.set('');
     const failedExerciseIds: string[] = [];
-    forkJoin(
-      pendingExercises.map(exercise =>
-        this.api.submit(exercise.id, this.sessionStore.get(exercise.id).submission).pipe(
-          tap(result => this.sessionStore.setResult(exercise.id, result)),
+    const results = new Map<string, GrammarSessionResult>();
+    // Sequential submits avoid concurrent serializable transactions on the API.
+    concat(
+      ...pendingExercises.map((exercise) =>
+        this.api.submit(exercise.id, this.sessionStore.submissionFor(exercise.id)).pipe(
+          tap((result) => results.set(exercise.id, result)),
           catchError(() => {
             failedExerciseIds.push(exercise.id);
             return of(null);
           }),
         ),
       ),
-    ).subscribe({
-      next: () => {
-        if (failedExerciseIds.length > 0) {
-          this.errorMessage.set(
-            failedExerciseIds.length === 1
-              ? 'Não foi possível verificar um exercício. As respostas foram mantidas; tente novamente.'
-              : `Não foi possível verificar ${failedExerciseIds.length} exercícios. As respostas foram mantidas; tente novamente.`,
-          );
-        }
-        this.submitting.set(false);
-      },
-    });
+    )
+      .pipe(toArray())
+      .subscribe({
+        next: () => {
+          // Answers are revealed only when every exercise was verified; retries reuse the submission IDs.
+          if (failedExerciseIds.length === 0) {
+            results.forEach((result, exerciseId) =>
+              this.sessionStore.setResult(exerciseId, result),
+            );
+          }
+          if (failedExerciseIds.length > 0) {
+            this.errorMessage.set(
+              failedExerciseIds.length === 1
+                ? 'Não foi possível verificar um exercício. As respostas foram mantidas; tente novamente.'
+                : `Não foi possível verificar ${failedExerciseIds.length} exercícios. As respostas foram mantidas; tente novamente.`,
+            );
+          }
+          this.submitting.set(false);
+        },
+      });
   }
 
   protected retry(): void {
@@ -163,10 +191,40 @@ export class PracticePage implements OnInit {
       this.sessionStore.reset(exercise.id);
     }
     this.errorMessage.set('');
+    this.pendencies.set([]);
+  }
+
+  private findPendencies(exercises: GrammarExercise[]): string[] {
+    const pendencies: string[] = [];
+    for (const exercise of exercises) {
+      const submission = this.sessionStore.get(exercise.id).submission;
+      const position = this.exercises().indexOf(exercise) + 1;
+      const blanks = this.segments(exercise).flatMap((segment) =>
+        segment.kind === 'blank' ? [segment.blank] : [],
+      );
+      const questions = exercise.exerciseType === 'fill_blank' ? [] : exercise.questions;
+      for (const blank of blanks) {
+        const answer = submission.blankAnswers.find((item) => item.blankKey === blank.key)?.answer;
+        if (!answer?.trim()) {
+          pendencies.push(
+            `Exercício ${position} (${exercise.title}): preencha a lacuna ${blank.key}.`,
+          );
+        }
+      }
+      for (const question of questions) {
+        const answer = submission.questionAnswers.find((item) => item.questionKey === question.key);
+        if (!answer?.optionKey) {
+          pendencies.push(
+            `Exercício ${position} (${exercise.title}): responda "${question.prompt}".`,
+          );
+        }
+      }
+    }
+    return pendencies;
   }
 
   protected allExercisesChecked(): boolean {
-    return this.exercises().every(exercise => !!this.sessionStore.get(exercise.id).result);
+    return this.exercises().every((exercise) => !!this.sessionStore.get(exercise.id).result);
   }
 
   protected optionLabel(option: GrammarOption): string {
@@ -191,15 +249,21 @@ export class PracticePage implements OnInit {
       return;
     }
 
-    this.api.getExercises(slug).subscribe({
-      next: exercises => {
+    forkJoin({ topic: this.api.getTopic(slug), exercises: this.api.getExercises(slug) }).subscribe({
+      next: ({ topic, exercises }) => {
         if (exercises.length === 0) {
           this.errorMessage.set('Ainda não há exercícios disponíveis para este tópico.');
           this.loading.set(false);
           return;
         }
-        forkJoin(exercises.map(exercise => this.api.getExercise(exercise.id))).subscribe({
-          next: loadedExercises => {
+        forkJoin(
+          exercises.map((exercise) =>
+            this.api
+              .getExercise(exercise.id)
+              .pipe(tap(() => this.sessionStore.setSubmissionContext(exercise.id, topic.id, null))),
+          ),
+        ).subscribe({
+          next: (loadedExercises) => {
             this.exercises.set(loadedExercises);
             this.loading.set(false);
           },

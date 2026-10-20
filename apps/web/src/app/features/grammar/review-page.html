@@ -1,0 +1,230 @@
+<section class="page" aria-labelledby="review-title">
+  <a class="back-link" routerLink="/grammar/statistics">← Estatísticas</a>
+  <header class="page-heading">
+    <p class="eyebrow">Prática orientada pelo seu histórico</p>
+    <h1 id="review-title">Revisão adaptativa</h1>
+    <p>Os motivos abaixo usam somente resultados de respostas avaliadas.</p>
+  </header>
+  @if (loading()) {
+    <p role="status">Preparando sua revisão…</p>
+  } @else if (errorMessage() && exercises().length === 0) {
+    <div class="notice error" role="alert">
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="primary-button" (click)="startReview()">Tentar novamente</button>
+    </div>
+  } @else if (session(); as currentSession) {
+    @if (currentSession.isShorterThanStandard) {
+      <p class="notice" role="status">
+        Esta revisão é mais curta: há {{ currentSession.exerciseCount }} exercícios elegíveis
+        disponíveis.
+      </p>
+    }
+    @if (currentSession.exerciseCount === 0) {
+      <div class="notice" role="status">
+        Ainda não há exercícios elegíveis. Estude um tópico e volte para criar uma revisão.
+      </div>
+      <a class="secondary-button" routerLink="/grammar">Explorar tópicos</a>
+    } @else {
+      <p class="session-count">{{ currentSession.exerciseCount }} exercícios nesta revisão</p>
+      @if (errorMessage()) {
+        <p class="notice error" role="alert">{{ errorMessage() }}</p>
+      }
+      <nav class="exercise-navigation" aria-label="Exercícios da revisão">
+        @for (view of exercises(); track trackExercise($index, view); let index = $index) {
+          <a
+            [href]="'#review-exercise-' + view.exercise.id"
+            [attr.aria-label]="'Ir ao exercício ' + (index + 1)"
+            >{{ index + 1 }}</a
+          >
+        }
+      </nav>
+      <div class="exercise-list">
+        @for (view of exercises(); track trackExercise($index, view); let index = $index) {
+          <article
+            class="exercise-card"
+            [id]="'review-exercise-' + view.exercise.id"
+            [attr.aria-labelledby]="'review-title-' + view.exercise.id"
+          >
+            <header class="exercise-heading">
+              <p class="eyebrow">
+                Exercício {{ index + 1 }} de {{ exercises().length }} ·
+                {{ view.metadata.selectionCategory }}
+              </p>
+              <h2 [id]="'review-title-' + view.exercise.id">{{ view.exercise.title }}</h2>
+              <p>{{ view.exercise.instruction }}</p>
+              <p class="reason">
+                <strong>{{ view.metadata.topicTitle || 'Tópico' }}:</strong>
+                {{ view.metadata.reason }}
+              </p>
+            </header>
+            @if (view.exercise.exerciseType === 'fill_blank') {
+              <div class="exercise-text">
+                @for (segment of segments(view.exercise); track $index) {
+                  @if (segment.kind === 'text') {
+                    <span>{{ segment.value }}</span>
+                  } @else {
+                    <span class="inline-answer">
+                      <label
+                        class="sr-only"
+                        [for]="'review-blank-' + view.exercise.id + '-' + segment.blank.key"
+                        >Lacuna {{ segment.blank.key }}</label
+                      >
+                      @if (segment.blank.inputType === 'select') {
+                        <select
+                          [id]="'review-blank-' + view.exercise.id + '-' + segment.blank.key"
+                          [value]="answerForBlank(view.exercise.id, segment.blank.key)"
+                          [disabled]="!!resultFor(view.exercise.id, segment.blank.key, 'blank')"
+                          (change)="setBlankAnswer(view.exercise.id, segment.blank.key, $event)"
+                        >
+                          <option value="">Selecione</option>
+                          @for (option of segment.blank.options; track option.key) {
+                            <option [value]="option.text">{{ option.text }}</option>
+                          }
+                        </select>
+                      } @else {
+                        <input
+                          [id]="'review-blank-' + view.exercise.id + '-' + segment.blank.key"
+                          type="text"
+                          autocomplete="off"
+                          [value]="answerForBlank(view.exercise.id, segment.blank.key)"
+                          [disabled]="!!resultFor(view.exercise.id, segment.blank.key, 'blank')"
+                          (input)="setBlankAnswer(view.exercise.id, segment.blank.key, $event)"
+                        />
+                      }
+                      @if (resultFor(view.exercise.id, segment.blank.key, 'blank'); as result) {
+                        <span class="inline-result"
+                          >{{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta:
+                          {{ result.correctAnswer }}</span
+                        >
+                      }
+                    </span>
+                  }
+                }
+              </div>
+            } @else {
+              <p class="exercise-text">{{ view.exercise.contentTemplate }}</p>
+              <div class="question-list">
+                @for (question of view.exercise.questions; track question.key) {
+                  <fieldset>
+                    <legend>{{ question.prompt }}</legend>
+                    <label
+                      class="sr-only"
+                      [for]="'review-question-' + view.exercise.id + '-' + question.key"
+                      >Resposta para {{ question.prompt }}</label
+                    >
+                    <select
+                      [id]="'review-question-' + view.exercise.id + '-' + question.key"
+                      [value]="answerForQuestion(view.exercise.id, question.key)"
+                      [disabled]="!!resultFor(view.exercise.id, question.key, 'question')"
+                      (change)="setQuestionAnswer(view.exercise.id, question.key, $event)"
+                    >
+                      <option value="">Selecione uma resposta</option>
+                      @for (option of question.options; track option.key) {
+                        <option [value]="option.key">{{ optionLabel(option) }}</option>
+                      }
+                    </select>
+                    @if (resultFor(view.exercise.id, question.key, 'question'); as result) {
+                      <p class="inline-result">
+                        {{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta:
+                        {{ result.correctAnswer }}
+                      </p>
+                    }
+                  </fieldset>
+                }
+              </div>
+            }
+            @if (result(view.exercise.id); as checked) {
+              <section
+                class="result-panel"
+                aria-live="polite"
+                [attr.aria-label]="'Resultado do exercício ' + (index + 1)"
+              >
+                <h3>
+                  Resultado: {{ checked.score }} de {{ checked.maxScore }} pontos ({{
+                    checked.percentage
+                  }}%)
+                </h3>
+                <ol>
+                  @for (item of checked.results; track item.itemType + item.itemKey) {
+                    <li>
+                      <strong>{{ item.isCorrect ? 'Correta' : 'Incorreta' }}.</strong> Sua resposta:
+                      {{ item.submittedAnswer || 'sem resposta' }}. Resposta esperada:
+                      {{ item.correctAnswer }}. {{ item.explanation }}
+                    </li>
+                  }
+                </ol>
+              </section>
+            } @else {
+              <button
+                type="button"
+                class="primary-button"
+                [disabled]="submittingIds().has(view.exercise.id)"
+                (click)="submitExercise(view)"
+              >
+                {{ submittingIds().has(view.exercise.id) ? 'Verificando…' : 'Verificar resposta' }}
+              </button>
+            }
+          </article>
+        }
+      </div>
+      <div class="summary-actions">
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="summaryLoading()"
+          (click)="loadSummary()"
+        >
+          {{ summaryLoading() ? 'Carregando resumo…' : 'Ver resumo da revisão' }}
+        </button>
+        <button type="button" class="secondary-button" (click)="startReview()">
+          Começar outra revisão
+        </button>
+      </div>
+      @if (summaryError()) {
+        <p class="notice error" role="alert">{{ summaryError() }}</p>
+      }
+      @if (summary(); as result) {
+        <section class="summary-panel" aria-labelledby="summary-title" aria-live="polite">
+          <h2 id="summary-title">Resumo da revisão</h2>
+          <p>
+            {{ result.exercisesAnswered }} exercícios respondidos.
+            {{ result.correctAnswers }} respostas corretas e
+            {{ result.incorrectAnswers }} incorretas.
+          </p>
+          @if (result.accuracyPercentage === null) {
+            <p>Sem respostas avaliadas nesta revisão.</p>
+          } @else {
+            <p>
+              Precisão: <strong>{{ result.accuracyPercentage }}%</strong>
+            </p>
+          }
+          <h3>Desempenho por tópico</h3>
+          @if (result.topicResults.length === 0) {
+            <p>Nenhuma resposta avaliada para resumir.</p>
+          }
+          <ul>
+            @for (topic of result.topicResults; track topic.topicId) {
+              <li>
+                <strong>{{ topic.topicTitle }}:</strong> {{ topic.correctAnswers }} corretas e
+                {{ topic.incorrectAnswers }} incorretas.
+                @if (topic.needsAttention) {
+                  <span class="attention">Este tópico precisa de atenção.</span>
+                }
+              </li>
+            }
+          </ul>
+          @if (result.priorComparisonAvailable) {
+            @if (
+              result.priorAccuracyPercentage !== null &&
+              result.priorAccuracyPercentage !== undefined
+            ) {
+              <p>Precisão anterior: {{ result.priorAccuracyPercentage }}%.</p>
+            }
+          } @else {
+            <p>Não há histórico suficiente para comparar com períodos anteriores.</p>
+          }
+        </section>
+      }
+    }
+  }
+</section>

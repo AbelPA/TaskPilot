@@ -1,0 +1,175 @@
+.page {
+  width: min(76rem, calc(100% - 2rem));
+  margin: 3rem auto;
+}
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #0f766e;
+  font-weight: 700;
+}
+.page-heading {
+  max-width: 48rem;
+  margin-bottom: 2rem;
+}
+.eyebrow {
+  color: #0f766e;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 0.35rem 0;
+  color: #0f172a;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  letter-spacing: -0.04em;
+}
+.page-heading > p:last-child,
+.exercise-heading > p {
+  color: #475569;
+  line-height: 1.6;
+}
+.session-count {
+  font-weight: 800;
+  color: #0f172a;
+}
+.exercise-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.exercise-navigation a {
+  display: grid;
+  width: 2.75rem;
+  min-height: 2.75rem;
+  place-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.6rem;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 800;
+}
+.exercise-list {
+  display: grid;
+  gap: 1rem;
+}
+.exercise-card,
+.summary-panel {
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+}
+.exercise-card h2,
+.summary-panel h2 {
+  margin: 0.25rem 0;
+  color: #0f172a;
+}
+.exercise-heading > p {
+  margin: 0.4rem 0;
+}
+.reason {
+  padding: 0.75rem;
+  border-left: 3px solid #0f766e;
+  background: #f0fdfa;
+  color: #134e4a !important;
+}
+.exercise-text {
+  margin: 1.25rem 0;
+  color: #0f172a;
+  font-size: 1.1rem;
+  line-height: 2.2;
+}
+.inline-answer {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin: 0 0.2rem;
+}
+input,
+select {
+  min-height: 2.75rem;
+  max-width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #94a3b8;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+}
+.question-list fieldset {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.6rem;
+}
+.question-list legend {
+  padding: 0 0.25rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+.inline-result {
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  margin: 0.5rem 0.5rem 0.25rem 0;
+  padding: 0.65rem 1rem;
+  border: 1px solid #0f766e;
+  border-radius: 0.7rem;
+  background: #0f766e;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+.secondary-button {
+  border-color: #64748b;
+  background: #fff;
+  color: #0f172a;
+}
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #0f766e;
+  outline-offset: 3px;
+}
+.result-panel,
+.summary-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 0.7rem;
+  background: #f0fdfa;
+  color: #134e4a;
+  line-height: 1.6;
+}
+.summary-actions {
+  margin: 1rem 0;
+}
+.summary-panel h2,
+.summary-panel h3 {
+  color: #0f172a;
+}
+.summary-panel li {
+  margin: 0.5rem 0;
+}
+.attention {
+  display: block;
+  color: #9a3412;
+  font-weight: 800;
+}

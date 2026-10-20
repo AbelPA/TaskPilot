@@ -29,6 +29,10 @@ public sealed class GrammarExerciseEndpointTests
         builder.Services.AddDbContext<GrammarDbContext>(options => options.UseSqlite(connection));
         builder.Services.AddScoped<GrammarCatalogService>();
         builder.Services.AddScoped<GrammarExerciseService>();
+        builder.Services.AddScoped<GrammarSubmissionHistoryService>();
+        builder.Services.AddScoped<GrammarStatisticsService>();
+        builder.Services.AddScoped<GrammarReviewService>();
+        builder.Services.AddScoped<GrammarReviewSummaryService>();
         var app = builder.Build();
         await using (app)
         {
@@ -70,17 +74,18 @@ public sealed class GrammarExerciseEndpointTests
                 }
             }
 
-            var submitted = await client.PostAsJsonAsync(
-                $"/api/grammar/exercises/{blanksExerciseId}/submit",
-                new
+            var stableSubmissionId = Guid.NewGuid();
+            var submissionPayload = new
                 {
+                    submissionId = stableSubmissionId,
                     blankAnswers = new[]
                     {
                         new { blankKey = "1", answer = " Are " },
                         new { blankKey = "2", answer = "am" },
                     },
                     questionAnswers = Array.Empty<object>(),
-                });
+                };
+            var submitted = await client.PostAsJsonAsync($"/api/grammar/exercises/{blanksExerciseId}/submit", submissionPayload);
             Assert.Equal(HttpStatusCode.OK, submitted.StatusCode);
             var result = await submitted.Content.ReadFromJsonAsync<JsonElement>();
             Assert.Equal(2m, result.GetProperty("score").GetDecimal());
@@ -88,11 +93,53 @@ public sealed class GrammarExerciseEndpointTests
             Assert.Equal(2, result.GetProperty("results").GetArrayLength());
             Assert.True(result.GetProperty("results")[0].GetProperty("isCorrect").GetBoolean());
             Assert.True(result.TryGetProperty("explanation", out _));
+            Assert.Equal(stableSubmissionId, result.GetProperty("submissionId").GetGuid());
+            Assert.Equal(1, result.GetProperty("attemptNumber").GetInt32());
+            var replay = await client.PostAsJsonAsync($"/api/grammar/exercises/{blanksExerciseId}/submit", submissionPayload);
+            Assert.Equal(HttpStatusCode.OK, replay.StatusCode);
+            Assert.Equal(stableSubmissionId, (await replay.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("submissionId").GetGuid());
+            var conflict = await client.PostAsJsonAsync($"/api/grammar/exercises/{blanksExerciseId}/submit", new
+            {
+                submissionId = stableSubmissionId,
+                blankAnswers = new[] { new { blankKey = "1", answer = "is" }, new { blankKey = "2", answer = "am" } },
+                questionAnswers = Array.Empty<object>()
+            });
+            Assert.Equal(HttpStatusCode.Conflict, conflict.StatusCode);
+            var stats = await client.GetFromJsonAsync<JsonElement[]>("/api/grammar/statistics/topics");
+            Assert.NotNull(stats);
+            Assert.Equal(2, stats[0].GetProperty("totalAttempts").GetInt32());
+            var missingSummary = await client.GetAsync($"/api/grammar/review/sessions/{Guid.NewGuid()}/summary");
+            Assert.Equal(HttpStatusCode.NotFound, missingSummary.StatusCode);
+            var sessionResponse = await client.PostAsync("/api/grammar/review/sessions", null);
+            Assert.Equal(HttpStatusCode.Created, sessionResponse.StatusCode);
+            var session = await sessionResponse.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal(2, session.GetProperty("exerciseCount").GetInt32());
+            var reviewSummary = await client.GetFromJsonAsync<JsonElement>($"/api/grammar/review/sessions/{session.GetProperty("sessionId").GetGuid()}/summary");
+            Assert.Equal(0, reviewSummary.GetProperty("exercisesAnswered").GetInt32());
+            Assert.False(reviewSummary.GetProperty("priorComparisonAvailable").GetBoolean());
+            Assert.Equal(JsonValueKind.Null, reviewSummary.GetProperty("priorAccuracyPercentage").ValueKind);
+            var sessionId = session.GetProperty("sessionId").GetGuid();
+            var topicId = stats[0].GetProperty("topicId").GetGuid();
+            var reviewSubmission = await client.PostAsJsonAsync($"/api/grammar/exercises/{blanksExerciseId}/submit", new
+            {
+                submissionId = Guid.NewGuid(), topicId, reviewSessionId = sessionId,
+                blankAnswers = new[] { new { blankKey = "1", answer = "are" }, new { blankKey = "2", answer = "is" } },
+                questionAnswers = Array.Empty<object>()
+            });
+            Assert.Equal(HttpStatusCode.OK, reviewSubmission.StatusCode);
+            var completedSummary = await client.GetFromJsonAsync<JsonElement>($"/api/grammar/review/sessions/{sessionId}/summary");
+            Assert.Equal(1, completedSummary.GetProperty("exercisesAnswered").GetInt32());
+            Assert.Equal(1, completedSummary.GetProperty("correctAnswers").GetInt32());
+            Assert.Equal(1, completedSummary.GetProperty("topicResults").GetArrayLength());
+            Assert.True(completedSummary.GetProperty("topicResults")[0].GetProperty("needsAttention").GetBoolean());
+
+
 
             var invalidSubmission = await client.PostAsJsonAsync(
                 $"/api/grammar/exercises/{blanksExerciseId}/submit",
                 new
                 {
+                    submissionId = Guid.NewGuid(),
                     blankAnswers = new[] { new { blankKey = "unknown", answer = "is" } },
                     questionAnswers = Array.Empty<object>(),
                 });
@@ -103,6 +150,7 @@ public sealed class GrammarExerciseEndpointTests
                 $"/api/grammar/exercises/{choiceExerciseId}/submit",
                 new
                 {
+                    submissionId = Guid.NewGuid(),
                     blankAnswers = Array.Empty<object>(),
                     questionAnswers = new[] { new { questionKey = "1", optionKey = "B" } },
                 });
@@ -123,6 +171,7 @@ public sealed class GrammarExerciseEndpointTests
                 $"/api/grammar/exercises/{blanksExerciseId}/submit",
                 new
                 {
+                    submissionId = Guid.NewGuid(),
                     blankAnswers = new[]
                     {
                         new { blankKey = "1", answer = "is" },
@@ -214,6 +263,40 @@ public sealed class GrammarExerciseEndpointTests
                 "The newly added topic should return an exercise list.");
             Assert.Single(discoveredExercises);
             Assert.Equal(newExerciseId, discoveredExercises[0].GetProperty("id").GetGuid());
+            Guid existingTopicId;
+            await using (var scope = app.Services.CreateAsyncScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<GrammarDbContext>();
+                existingTopicId = await dbContext.Topics.Where(topic => topic.Id != newTopicId).Select(topic => topic.Id).SingleAsync();
+                dbContext.ExerciseTopics.Add(new Api.Grammar.Persistence.Entities.ExerciseTopicEntity
+                {
+                    ExerciseId = newExerciseId,
+                    TopicId = existingTopicId,
+                });
+                await dbContext.SaveChangesAsync();
+            }
+            var ambiguousTopicSubmission = await client.PostAsJsonAsync($"/api/grammar/exercises/{newExerciseId}/submit", new
+            {
+                submissionId = Guid.NewGuid(),
+                blankAnswers = new[] { new { blankKey = "1", answer = "worked" } },
+                questionAnswers = Array.Empty<object>()
+            });
+            Assert.Equal(HttpStatusCode.BadRequest, ambiguousTopicSubmission.StatusCode);
+            var attributedSubmissionId = Guid.NewGuid();
+            var attributedSubmission = await client.PostAsJsonAsync($"/api/grammar/exercises/{newExerciseId}/submit", new
+            {
+                submissionId = attributedSubmissionId,
+                topicId = newTopicId,
+                blankAnswers = new[] { new { blankKey = "1", answer = "worked" } },
+                questionAnswers = Array.Empty<object>()
+            });
+            Assert.Equal(HttpStatusCode.OK, attributedSubmission.StatusCode);
+            await using (var scope = app.Services.CreateAsyncScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<GrammarDbContext>();
+                var saved = await dbContext.Submissions.SingleAsync(x => x.Id == attributedSubmissionId);
+                Assert.Equal(newTopicId, saved.TopicId);
+            }
 
             await using (var scope = app.Services.CreateAsyncScope())
             {

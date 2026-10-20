@@ -22,6 +22,10 @@ public static class GrammarServiceRegistration
                 npgsql.MigrationsHistoryTable("__GrammarMigrationsHistory")));
         services.AddScoped<GrammarCatalogService>();
         services.AddScoped<GrammarExerciseService>();
+        services.AddScoped<GrammarSubmissionHistoryService>();
+        services.AddScoped<GrammarStatisticsService>();
+        services.AddScoped<GrammarReviewService>();
+        services.AddScoped<GrammarReviewSummaryService>();
 
         return services;
     }

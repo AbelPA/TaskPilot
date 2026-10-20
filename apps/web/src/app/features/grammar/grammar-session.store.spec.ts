@@ -26,4 +26,16 @@ describe('GrammarSessionStore', () => {
       { questionKey: '1', optionKey: 'B' },
     ]);
   });
+
+  it('keeps one submission ID across retries and resets it for an intentional new attempt', () => {
+    store.setSubmissionContext('exercise-1', 'topic-1', 'review-1');
+    store.setAnswer('exercise-1', 'blank-1', 'am');
+    const submissionId = store.submissionFor('exercise-1').submissionId;
+    store.setAnswer('exercise-1', 'blank-1', 'am');
+    expect(store.submissionFor('exercise-1').submissionId).toBe(submissionId);
+    expect(store.submissionFor('exercise-1').reviewSessionId).toBe('review-1');
+
+    store.reset('exercise-1');
+    expect(store.submissionFor('exercise-1').submissionId).not.toBe(submissionId);
+  });
 });

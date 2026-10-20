@@ -1,0 +1,72 @@
+<section class="page" aria-labelledby="statistics-title">
+  <header class="page-heading">
+    <p class="eyebrow">Seu progresso</p>
+    <h1 id="statistics-title">Estatísticas por tópico</h1>
+    <p>
+      Os resultados refletem respostas realmente avaliadas. Tópicos sem tentativas não recebem uma
+      porcentagem.
+    </p>
+    <a class="review-link" routerLink="/grammar/review">Começar uma revisão adaptativa</a>
+  </header>
+  @if (loading()) {
+    <p role="status">Carregando estatísticas…</p>
+  } @else if (errorMessage()) {
+    <p class="notice error" role="alert">{{ errorMessage() }}</p>
+    <button type="button" class="action-button" (click)="loadStatistics()">Tentar novamente</button>
+  } @else if (topics().length === 0) {
+    <p class="notice" role="status">Ainda não há tópicos ativos para mostrar.</p>
+  } @else {
+    <div class="statistics-grid">
+      @for (topic of topics(); track trackTopic($index, topic)) {
+        <article class="statistics-card" [attr.aria-labelledby]="topic.topicId">
+          <div class="card-heading">
+            <h2 [id]="topic.topicId">{{ topic.topicTitle }}</h2>
+            <a
+              [routerLink]="['/grammar', topic.topicSlug]"
+              [attr.aria-label]="'Estudar ' + topic.topicTitle"
+              >Estudar tópico</a
+            >
+          </div>
+          @if (!topic.assessed || topic.totalAttempts === 0 || topic.accuracyPercentage === null) {
+            <p class="not-assessed" role="status">Ainda não avaliado</p>
+            <p>Pratique este tópico para começar a acompanhar seu progresso.</p>
+          } @else {
+            <p class="accuracy">{{ topic.accuracyPercentage }}<span>%</span> de acerto</p>
+            <dl class="metrics">
+              <div>
+                <dt>Tentativas</dt>
+                <dd>{{ topic.totalAttempts }}</dd>
+              </div>
+              <div>
+                <dt>Corretas</dt>
+                <dd>{{ topic.correctAnswers }}</dd>
+              </div>
+              <div>
+                <dt>Incorretas</dt>
+                <dd>{{ topic.incorrectAnswers }}</dd>
+              </div>
+              <div>
+                <dt>Erros</dt>
+                <dd>{{ topic.errorPercentage }}%</dd>
+              </div>
+            </dl>
+            <p class="recent">
+              Últimas {{ topic.recentAttemptCount }} respostas:
+              {{ topic.recentCorrectAnswers }} corretas e
+              {{ topic.recentIncorrectAnswers }} incorretas.
+            </p>
+            @if (topic.insufficientEvidence) {
+              <p class="evidence">Ainda há poucas respostas para uma tendência confiável.</p>
+            }
+            <p class="last-attempt">
+              Última tentativa:
+              <time [attr.datetime]="topic.lastAttemptAt">{{
+                formatDate(topic.lastAttemptAt)
+              }}</time>
+            </p>
+          }
+        </article>
+      }
+    </div>
+  }
+</section>

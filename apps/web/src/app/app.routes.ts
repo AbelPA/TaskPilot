@@ -1,29 +1,41 @@
 import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
+    path: 'grammar/statistics',
+    loadComponent: () =>
+      import('./features/grammar/statistics-page').then((module) => module.StatisticsPage),
+  },
+  {
+    path: 'grammar/review',
+    loadComponent: () =>
+      import('./features/grammar/review-page').then((module) => module.ReviewPage),
+  },
+  {
     path: 'extract-audio',
     loadComponent: () =>
-      import('./features/audio-extraction/audio-extraction-page').then(module => module.AudioExtractionPage),
+      import('./features/audio-extraction/audio-extraction-page').then(
+        (module) => module.AudioExtractionPage,
+      ),
   },
   {
     path: 'grammar',
     loadComponent: () =>
-      import('./features/grammar/topics-page').then(module => module.TopicsPage),
+      import('./features/grammar/topics-page').then((module) => module.TopicsPage),
   },
   {
     path: 'grammar/:slug/practice',
     loadComponent: () =>
-      import('./features/grammar/practice-page').then(module => module.PracticePage),
+      import('./features/grammar/practice-page').then((module) => module.PracticePage),
   },
   {
     path: 'grammar/:slug',
     loadComponent: () =>
-      import('./features/grammar/theory-page').then(module => module.TheoryPage),
+      import('./features/grammar/theory-page').then((module) => module.TheoryPage),
   },
   {
     path: 'settings',
     loadComponent: () =>
-      import('./features/settings/settings-page').then(module => module.SettingsPage),
+      import('./features/settings/settings-page').then((module) => module.SettingsPage),
   },
   { path: '', pathMatch: 'full', redirectTo: 'extract-audio' },
   { path: '**', redirectTo: 'extract-audio' },

@@ -11,6 +11,18 @@ public static class GrammarEndpoints
     {
         var group = endpoints.MapGroup("/api/grammar").WithTags("Grammar study");
 
+        group.MapGet("/statistics/topics", GetTopicStatisticsAsync)
+            .WithName("GetGrammarTopicStatistics")
+            .Produces<IReadOnlyList<GrammarTopicStatisticsResponse>>();
+        group.MapPost("/review/sessions", CreateReviewSessionAsync)
+            .WithName("CreateGrammarReviewSession")
+            .Produces<GrammarReviewSessionResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+        group.MapGet("/review/sessions/{sessionId:guid}/summary", GetReviewSummaryAsync)
+            .WithName("GetGrammarReviewSessionSummary")
+            .Produces<GrammarReviewSessionSummaryResponse>()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         group.MapGet("/topics", GetTopicsAsync)
             .WithName("GetGrammarTopics")
             .Produces<IReadOnlyList<GrammarTopicSummary>>()
@@ -35,9 +47,25 @@ public static class GrammarEndpoints
             .Produces<GrammarExerciseResult>()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         return endpoints;
+    }
+
+    private static async Task<IResult> GetTopicStatisticsAsync(GrammarStatisticsService service, CancellationToken cancellationToken) =>
+        Results.Ok(await service.GetTopicStatisticsAsync(cancellationToken));
+
+    private static async Task<IResult> CreateReviewSessionAsync(GrammarReviewService service, CancellationToken cancellationToken)
+    {
+        var session = await service.CreateSessionAsync(cancellationToken);
+        return Results.Json(session, statusCode: StatusCodes.Status201Created);
+    }
+
+    private static async Task<IResult> GetReviewSummaryAsync(Guid sessionId, GrammarReviewSummaryService service, CancellationToken cancellationToken)
+    {
+        var summary = await service.GetSummaryAsync(sessionId, cancellationToken);
+        return summary is null ? NotFound("Grammar review session not found.", "GRAMMAR_REVIEW_SESSION_NOT_FOUND") : Results.Ok(summary);
     }
 
     private static async Task<IResult> GetTopicsAsync(
@@ -127,6 +155,10 @@ public static class GrammarEndpoints
             return result is null
                 ? NotFound("Grammar exercise not found.", "GRAMMAR_EXERCISE_NOT_FOUND")
                 : Results.Ok(result);
+        }
+        catch (GrammarSubmissionConflictException exception)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status409Conflict, title: "Submission ID conflict", detail: exception.Message, extensions: new Dictionary<string, object?> { ["code"] = "SUBMISSION_ID_CONFLICT" });
         }
         catch (GrammarSubmissionException exception)
         {

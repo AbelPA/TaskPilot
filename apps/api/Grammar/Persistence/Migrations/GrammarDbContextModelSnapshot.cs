@@ -22,6 +22,58 @@ namespace api.Grammar.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Api.Grammar.Persistence.Entities.EvaluatedAnswerEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CorrectAnswer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Explanation")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ItemKey")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("ItemType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<decimal>("MaxPoints")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
+
+                    b.Property<decimal>("Points")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
+
+                    b.Property<Guid>("SubmissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SubmittedAnswer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.HasIndex("SubmissionId", "ItemType", "ItemKey")
+                        .IsUnique();
+
+                    b.ToTable("grammar_evaluated_answers", (string)null);
+                });
+
             modelBuilder.Entity("Api.Grammar.Persistence.Entities.ExerciseBlankAnswerEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -449,6 +501,148 @@ namespace api.Grammar.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarReviewExerciseEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("PriorityScore")
+                        .HasPrecision(6, 5)
+                        .HasColumnType("numeric(6,5)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SelectionCategory")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TitleSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TopicTitleSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId", "DisplayOrder")
+                        .IsUnique();
+
+                    b.HasIndex("SessionId", "ExerciseId")
+                        .IsUnique();
+
+                    b.ToTable("grammar_review_exercises", (string)null);
+                });
+
+            modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarReviewSessionEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AvailableExerciseCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RequestedExerciseCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SelectionSeed")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.ToTable("grammar_review_sessions", (string)null);
+                });
+
+            modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarSubmissionEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("EvaluatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExerciseExplanation")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExerciseTitleSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("MaxScore")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
+
+                    b.Property<string>("PayloadHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<decimal>("Percentage")
+                        .HasPrecision(5, 1)
+                        .HasColumnType("numeric(5,1)");
+
+                    b.Property<Guid?>("ReviewSessionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Score")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
+
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TopicTitleSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewSessionId");
+
+                    b.HasIndex("TopicId", "EvaluatedAt");
+
+                    b.HasIndex("ExerciseId", "TopicId", "AttemptNumber")
+                        .IsUnique();
+
+                    b.ToTable("grammar_submissions", (string)null);
+                });
+
             modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarTheorySectionEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -553,6 +747,17 @@ namespace api.Grammar.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Api.Grammar.Persistence.Entities.EvaluatedAnswerEntity", b =>
+                {
+                    b.HasOne("Api.Grammar.Persistence.Entities.GrammarSubmissionEntity", "Submission")
+                        .WithMany("Answers")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Submission");
+                });
+
             modelBuilder.Entity("Api.Grammar.Persistence.Entities.ExerciseBlankAnswerEntity", b =>
                 {
                     b.HasOne("Api.Grammar.Persistence.Entities.ExerciseBlankEntity", "Blank")
@@ -632,6 +837,25 @@ namespace api.Grammar.Persistence.Migrations
                     b.Navigation("Topic");
                 });
 
+            modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarReviewExerciseEntity", b =>
+                {
+                    b.HasOne("Api.Grammar.Persistence.Entities.GrammarReviewSessionEntity", "Session")
+                        .WithMany("Exercises")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarSubmissionEntity", b =>
+                {
+                    b.HasOne("Api.Grammar.Persistence.Entities.GrammarReviewSessionEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ReviewSessionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarTheorySectionEntity", b =>
                 {
                     b.HasOne("Api.Grammar.Persistence.Entities.GrammarTopicEntity", "Topic")
@@ -657,6 +881,16 @@ namespace api.Grammar.Persistence.Migrations
                     b.Navigation("Options");
 
                     b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarReviewSessionEntity", b =>
+                {
+                    b.Navigation("Exercises");
+                });
+
+            modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarSubmissionEntity", b =>
+                {
+                    b.Navigation("Answers");
                 });
 
             modelBuilder.Entity("Api.Grammar.Persistence.Entities.GrammarTopicEntity", b =>

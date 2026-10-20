@@ -73,8 +73,68 @@ export interface GrammarExercise {
 }
 
 export interface GrammarSubmission {
+  submissionId: string;
+  topicId?: string | null;
+  reviewSessionId?: string | null;
   blankAnswers: Array<{ blankKey: string; answer: string }>;
   questionAnswers: Array<{ questionKey: string; optionKey: string }>;
+}
+
+export interface GrammarTopicStatistics {
+  topicId: string;
+  topicSlug: string;
+  topicTitle: string;
+  totalAttempts: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  accuracyPercentage: number | null;
+  errorPercentage: number | null;
+  lastAttemptAt: string | null;
+  recentAttemptCount: number;
+  recentCorrectAnswers: number;
+  recentIncorrectAnswers: number;
+  assessed: boolean;
+  insufficientEvidence: boolean;
+}
+
+export type ReviewSelectionCategory = 'priority' | 'maintenance' | 'exploration';
+
+export interface GrammarReviewExercise {
+  exerciseId: string;
+  topicId: string;
+  title?: string;
+  topicTitle?: string;
+  selectionCategory: ReviewSelectionCategory;
+  priorityScore: number | null;
+  reason: string;
+  displayOrder: number;
+}
+
+export interface GrammarReviewSession {
+  sessionId: string;
+  standardExerciseCount: 10;
+  exerciseCount: number;
+  isShorterThanStandard: boolean;
+  exercises: GrammarReviewExercise[];
+}
+
+export interface GrammarReviewTopicResult {
+  topicId: string;
+  topicTitle: string;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  needsAttention: boolean;
+}
+
+export interface GrammarReviewSummary {
+  sessionId: string;
+  exercisesAnswered: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  accuracyPercentage: number | null;
+  topicResults: GrammarReviewTopicResult[];
+  priorComparisonAvailable?: boolean;
+  priorAccuracyPercentage?: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -103,6 +163,20 @@ export class GrammarApiService {
     return this.http.post<GrammarSessionResult>(
       `/api/grammar/exercises/${encodeURIComponent(exerciseId)}/submit`,
       submission,
+    );
+  }
+
+  getTopicStatistics(): Observable<GrammarTopicStatistics[]> {
+    return this.http.get<GrammarTopicStatistics[]>('/api/grammar/statistics/topics');
+  }
+
+  createReviewSession(): Observable<GrammarReviewSession> {
+    return this.http.post<GrammarReviewSession>('/api/grammar/review/sessions', null);
+  }
+
+  getReviewSummary(sessionId: string): Observable<GrammarReviewSummary> {
+    return this.http.get<GrammarReviewSummary>(
+      `/api/grammar/review/sessions/${encodeURIComponent(sessionId)}/summary`,
     );
   }
 }

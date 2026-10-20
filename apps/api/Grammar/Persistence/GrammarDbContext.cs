@@ -13,6 +13,10 @@ public sealed class GrammarDbContext(DbContextOptions<GrammarDbContext> options)
     public DbSet<ExerciseBlankAnswerEntity> BlankAnswers => Set<ExerciseBlankAnswerEntity>();
     public DbSet<ExerciseQuestionEntity> Questions => Set<ExerciseQuestionEntity>();
     public DbSet<ExerciseOptionEntity> Options => Set<ExerciseOptionEntity>();
+    public DbSet<GrammarSubmissionEntity> Submissions => Set<GrammarSubmissionEntity>();
+    public DbSet<EvaluatedAnswerEntity> EvaluatedAnswers => Set<EvaluatedAnswerEntity>();
+    public DbSet<GrammarReviewSessionEntity> ReviewSessions => Set<GrammarReviewSessionEntity>();
+    public DbSet<GrammarReviewExerciseEntity> ReviewExercises => Set<GrammarReviewExerciseEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -157,6 +161,48 @@ public sealed class GrammarDbContext(DbContextOptions<GrammarDbContext> options)
 
     private static void SeedContent(ModelBuilder modelBuilder)
     {
+        var submissions = modelBuilder.Entity<GrammarSubmissionEntity>();
+        submissions.ToTable("grammar_submissions");
+        submissions.HasKey(x => x.Id);
+        submissions.Property(x => x.ExerciseTitleSnapshot).HasMaxLength(200).IsRequired();
+        submissions.Property(x => x.TopicTitleSnapshot).HasMaxLength(200).IsRequired();
+        submissions.Property(x => x.ExerciseExplanation).IsRequired();
+        submissions.Property(x => x.PayloadHash).HasMaxLength(64).IsRequired();
+        submissions.Property(x => x.Score).HasPrecision(8, 2);
+        submissions.Property(x => x.MaxScore).HasPrecision(8, 2);
+        submissions.Property(x => x.Percentage).HasPrecision(5, 1);
+        submissions.HasIndex(x => new { x.TopicId, x.EvaluatedAt });
+        submissions.HasIndex(x => new { x.ExerciseId, x.TopicId, x.AttemptNumber }).IsUnique();
+        submissions.HasOne<GrammarReviewSessionEntity>().WithMany().HasForeignKey(x => x.ReviewSessionId).OnDelete(DeleteBehavior.Restrict);
+        var answers = modelBuilder.Entity<EvaluatedAnswerEntity>();
+        answers.ToTable("grammar_evaluated_answers");
+        answers.HasKey(x => x.Id);
+        answers.Property(x => x.ItemType).HasMaxLength(16).IsRequired();
+        answers.Property(x => x.ItemKey).HasMaxLength(80).IsRequired();
+        answers.Property(x => x.SubmittedAnswer).IsRequired();
+        answers.Property(x => x.CorrectAnswer).IsRequired();
+        answers.Property(x => x.Explanation).IsRequired();
+        answers.Property(x => x.Points).HasPrecision(8, 2);
+        answers.Property(x => x.MaxPoints).HasPrecision(8, 2);
+        answers.HasIndex(x => new { x.SubmissionId, x.ItemType, x.ItemKey }).IsUnique();
+        answers.HasIndex(x => x.SubmissionId);
+        answers.HasOne(x => x.Submission).WithMany(x => x.Answers).HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
+        var sessions = modelBuilder.Entity<GrammarReviewSessionEntity>();
+        sessions.ToTable("grammar_review_sessions");
+        sessions.HasKey(x => x.Id);
+        sessions.HasIndex(x => x.CreatedAt);
+        var reviewExercises = modelBuilder.Entity<GrammarReviewExerciseEntity>();
+        reviewExercises.ToTable("grammar_review_exercises");
+        reviewExercises.HasKey(x => x.Id);
+        reviewExercises.Property(x => x.SelectionCategory).HasMaxLength(20).IsRequired();
+        reviewExercises.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+        reviewExercises.Property(x => x.TitleSnapshot).HasMaxLength(200).IsRequired();
+        reviewExercises.Property(x => x.TopicTitleSnapshot).HasMaxLength(200).IsRequired();
+        reviewExercises.Property(x => x.PriorityScore).HasPrecision(6, 5);
+        reviewExercises.HasIndex(x => new { x.SessionId, x.ExerciseId }).IsUnique();
+        reviewExercises.HasIndex(x => new { x.SessionId, x.DisplayOrder }).IsUnique();
+        reviewExercises.HasOne(x => x.Session).WithMany(x => x.Exercises).HasForeignKey(x => x.SessionId).OnDelete(DeleteBehavior.Restrict);
+
         var topicId = Guid.Parse("b9a9e289-6e16-4f17-a144-81b12f2c5e01");
         var theoryId = Guid.Parse("b9a9e289-6e16-4f17-a144-81b12f2c5e02");
         var blanksExerciseId = Guid.Parse("b9a9e289-6e16-4f17-a144-81b12f2c5e03");
