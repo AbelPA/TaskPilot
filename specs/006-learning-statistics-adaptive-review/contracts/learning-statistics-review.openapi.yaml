@@ -1,0 +1,198 @@
+openapi: 3.1.0
+info:
+  title: TaskPilot Learning Statistics and Adaptive Review API
+  version: 1.0.0
+  description: Statistics and review-session operations extending the grammar study API.
+servers:
+  - url: /
+paths:
+  /api/grammar/statistics/topics:
+    get:
+      operationId: getGrammarTopicStatistics
+      summary: Get evaluated-answer statistics for active topics
+      responses:
+        "200":
+          description: Topic statistics for the current single-learner context
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TopicStatistics' }
+  /api/grammar/review/sessions:
+    post:
+      operationId: createGrammarReviewSession
+      summary: Generate and persist an adaptive review session
+      responses:
+        "201":
+          description: Session generated from active eligible exercises
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReviewSession' }
+        "500": { $ref: '#/components/responses/Problem' }
+  /api/grammar/review/sessions/{sessionId}/summary:
+    get:
+      operationId: getGrammarReviewSessionSummary
+      summary: Get results for evaluated answers in a review session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Summary excludes exercises without evaluated answers
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionSummary' }
+        "404": { $ref: '#/components/responses/Problem' }
+  /api/grammar/exercises/{exerciseId}/submit:
+    post:
+      operationId: submitGrammarExerciseWithHistory
+      summary: Evaluate and persist a logical answer submission
+      description: Repeating the same submissionId and payload returns the original result; reusing it with different input is a conflict. A new deliberate attempt requires a new submissionId.
+      parameters:
+        - name: exerciseId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Submission' }
+      responses:
+        "200":
+          description: Evaluated result durably recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubmissionResult' }
+        "400": { $ref: '#/components/responses/Problem' }
+        "404": { $ref: '#/components/responses/Problem' }
+        "409": { $ref: '#/components/responses/Problem' }
+        "500": { $ref: '#/components/responses/Problem' }
+components:
+  responses:
+    Problem:
+      description: Request failed; no new evaluated response is reported as persisted
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            required: [title, status]
+            properties:
+              title: { type: string }
+              status: { type: integer }
+              detail: { type: string }
+              code: { type: string }
+  schemas:
+    TopicStatistics:
+      type: object
+      required: [topicId, topicSlug, topicTitle, totalAttempts, correctAnswers, incorrectAnswers, assessed, recentAttemptCount]
+      properties:
+        topicId: { type: string, format: uuid }
+        topicSlug: { type: string }
+        topicTitle: { type: string }
+        totalAttempts: { type: integer, minimum: 0, description: Evaluated answer items }
+        correctAnswers: { type: integer, minimum: 0 }
+        incorrectAnswers: { type: integer, minimum: 0 }
+        accuracyPercentage: { type: [number, 'null'], minimum: 0, maximum: 100 }
+        errorPercentage: { type: [number, 'null'], minimum: 0, maximum: 100 }
+        lastAttemptAt: { type: [string, 'null'], format: date-time }
+        recentAttemptCount: { type: integer, minimum: 0, maximum: 5 }
+        recentCorrectAnswers: { type: integer, minimum: 0 }
+        recentIncorrectAnswers: { type: integer, minimum: 0 }
+        assessed: { type: boolean }
+        insufficientEvidence: { type: boolean }
+    ReviewSession:
+      type: object
+      required: [sessionId, standardExerciseCount, exerciseCount, isShorterThanStandard, exercises]
+      properties:
+        sessionId: { type: string, format: uuid }
+        standardExerciseCount: { type: integer, const: 10 }
+        exerciseCount: { type: integer, minimum: 0, maximum: 10 }
+        isShorterThanStandard: { type: boolean }
+        exercises:
+          type: array
+          maxItems: 10
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/ReviewExercise' }
+    ReviewExercise:
+      type: object
+      required: [exerciseId, topicId, selectionCategory, reason, displayOrder]
+      properties:
+        exerciseId: { type: string, format: uuid }
+        topicId: { type: string, format: uuid }
+        title: { type: string }
+        topicTitle: { type: string }
+        selectionCategory: { type: string, enum: [priority, maintenance, exploration] }
+        priorityScore: { type: [number, 'null'], minimum: 0, maximum: 1 }
+        reason: { type: string }
+        displayOrder: { type: integer, minimum: 0 }
+    Submission:
+      type: object
+      required: [submissionId, blankAnswers, questionAnswers]
+      properties:
+        submissionId: { type: string, format: uuid }
+        topicId: { type: [string, 'null'], format: uuid, description: Required when an exercise is linked to more than one topic; must be associated with this exercise }
+        reviewSessionId: { type: [string, 'null'], format: uuid }
+        blankAnswers:
+          type: array
+          items:
+            type: object
+            required: [blankKey, answer]
+            properties:
+              blankKey: { type: string }
+              answer: { type: string }
+        questionAnswers:
+          type: array
+          items:
+            type: object
+            required: [questionKey, optionKey]
+            properties:
+              questionKey: { type: string }
+              optionKey: { type: string }
+    SubmissionResult:
+      type: object
+      required: [submissionId, attemptNumber, exerciseId, score, maxScore, percentage, results]
+      properties:
+        submissionId: { type: string, format: uuid }
+        attemptNumber: { type: integer, minimum: 1 }
+        exerciseId: { type: string, format: uuid }
+        score: { type: number }
+        maxScore: { type: number }
+        percentage: { type: number, minimum: 0, maximum: 100 }
+        results:
+          type: array
+          items:
+            type: object
+            required: [itemKey, itemType, isCorrect, submittedAnswer, correctAnswer]
+            properties:
+              itemKey: { type: string }
+              itemType: { type: string, enum: [blank, question] }
+              isCorrect: { type: boolean }
+              submittedAnswer: { type: string }
+              correctAnswer: { type: string }
+              explanation: { type: string }
+              points: { type: number }
+    SessionSummary:
+      type: object
+      required: [sessionId, exercisesAnswered, correctAnswers, incorrectAnswers, accuracyPercentage, topicResults]
+      properties:
+        sessionId: { type: string, format: uuid }
+        exercisesAnswered: { type: integer, minimum: 0 }
+        correctAnswers: { type: integer, minimum: 0 }
+        incorrectAnswers: { type: integer, minimum: 0 }
+        accuracyPercentage: { type: [number, 'null'], minimum: 0, maximum: 100 }
+        topicResults:
+          type: array
+          items:
+            type: object
+            required: [topicId, topicTitle, correctAnswers, incorrectAnswers, needsAttention]
+            properties:
+              topicId: { type: string, format: uuid }
+              topicTitle: { type: string }
+              correctAnswers: { type: integer, minimum: 0 }
+              incorrectAnswers: { type: integer, minimum: 0 }
+              needsAttention: { type: boolean }
+        priorComparisonAvailable: { type: boolean }
+        priorAccuracyPercentage: { type: [number, 'null'], minimum: 0, maximum: 100 }
