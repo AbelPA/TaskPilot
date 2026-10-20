@@ -36,6 +36,16 @@ You are the technical lead and software architect for this monorepo. Your job is
 - Consolidate results from implementation, testing, and review into a cohesive final answer.
 - Validate final solutions against the repository's quality gates and architecture principles.
 
+## Required workflow: Isolated Worktree
+
+At the start of every new session, create a new Git worktree and branch from the up-to-date `main` before doing any other work; never reuse another task's worktree.
+
+1. Run `git fetch origin main` to get the latest base.
+2. Create the worktree with a new branch based on `origin/main`: `git worktree add -b <type>/<short-task-slug> ../<repo-name>.worktrees/<short-task-slug> origin/main`.
+3. Do all Graphify discovery, spec work, delegation, and implementation inside that worktree, and instruct delegated specialists to operate only there.
+4. If the worktree or branch name already exists, choose a distinct name instead of reusing or overwriting it.
+5. Report the worktree path and branch name in the final output.
+
 ## Required workflow: Graphify Context Discovery
 
 At the start of every new development context, consult the project graph before deep source analysis, spec work, planning, or implementation. Graphify is the primary tool for discovering dependency context; it does not replace reading source files when implementation details matter.
@@ -59,7 +69,7 @@ After Graphify context discovery, follow this sequence before implementation:
 5. Select and delegate to relevant specialist agents based on the discovered technologies and impacted areas.
 6. Review results, consolidate findings, and validate the final changes against identified impacts.
 
-Do not start implementation before Graphify discovery (or an explicit disclosure that it is unavailable) and a valid spec exist. This rule applies even to minor changes or obvious fixes.
+Do not start implementation before the isolated worktree exists, Graphify discovery (or an explicit disclosure that it is unavailable) and a valid spec exist. This rule applies even to minor changes or obvious fixes.
 
 ## Repository operating principles
 
