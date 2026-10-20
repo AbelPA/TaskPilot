@@ -3,123 +3,133 @@
 
   @if (loading()) {
     <p role="status">Carregando exercício…</p>
-  } @else if (errorMessage() && !exercise()) {
+  } @else if (errorMessage() && exercises().length === 0) {
     <div class="notice" role="alert">
       <p>{{ errorMessage() }}</p>
       <a [routerLink]="['/grammar', topicSlug()]">Voltar à teoria</a>
     </div>
-  } @else if (exercise(); as currentExercise) {
+  } @else {
     <header class="page-heading">
-      <p class="eyebrow">
-        Exercício {{ exerciseIndex() + 1 }} de {{ exercises().length }}
-      </p>
-      <h1 id="practice-title">{{ currentExercise.title }}</h1>
-      <p>{{ currentExercise.instruction }}</p>
+      <p class="eyebrow">{{ exercises().length }} exercícios</p>
+      <h1 id="practice-title">Pratique este tópico</h1>
+      <p>Responda aos exercícios e verifique tudo ao final.</p>
     </header>
-
-    @if (currentExercise.exerciseType === 'fill_blank') {
-      <div class="exercise-text" aria-label="Texto do exercício">
-        @for (segment of segments(); track $index) {
-          @if (segment.kind === 'text') {
-            <span>{{ segment.value }}</span>
-          } @else {
-            <span class="inline-answer">
-              <label class="sr-only" [for]="'blank-' + segment.blank.key">Lacuna {{ segment.blank.key }}</label>
-              @if (segment.blank.inputType === 'select') {
-                <select
-                  [id]="'blank-' + segment.blank.key"
-                  [value]="answerForBlank(segment.blank.key)"
-                  [disabled]="!!resultFor(segment.blank.key, 'blank')"
-                  (change)="setBlankAnswer(segment.blank.key, $event)"
-                >
-                  <option value="">Selecione</option>
-                  @for (option of segment.blank.options; track option.key) {
-                    <option [value]="option.text">{{ option.text }}</option>
-                  }
-                </select>
-              } @else {
-                <input
-                  [id]="'blank-' + segment.blank.key"
-                  type="text"
-                  autocomplete="off"
-                  [value]="answerForBlank(segment.blank.key)"
-                  [disabled]="!!resultFor(segment.blank.key, 'blank')"
-                  (input)="setBlankAnswer(segment.blank.key, $event)"
-                />
-              }
-              @if (resultFor(segment.blank.key, 'blank'); as result) {
-                <span class="inline-result" [class.correct]="result.isCorrect">
-                  {{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta: {{ result.correctAnswer }}
-                </span>
-              }
-            </span>
-          }
-        }
-      </div>
-    } @else {
-      <div class="exercise-text context">{{ currentExercise.contentTemplate }}</div>
-      <div class="question-list">
-        @for (question of currentExercise.questions; track question.key) {
-          <fieldset>
-            <legend>{{ question.prompt }}</legend>
-            <label class="sr-only" [for]="'question-' + question.key">Resposta para {{ question.prompt }}</label>
-            <select
-              [id]="'question-' + question.key"
-              [value]="answerForQuestion(question.key)"
-              [disabled]="!!resultFor(question.key, 'question')"
-              (change)="setQuestionAnswer(question.key, $event)"
-            >
-              <option value="">Selecione uma resposta</option>
-              @for (option of question.options; track option.key) {
-                <option [value]="option.key">{{ optionLabel(option) }}</option>
-              }
-            </select>
-            @if (resultFor(question.key, 'question'); as result) {
-              <p class="inline-result" [class.correct]="result.isCorrect">
-                {{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta: {{ result.correctAnswer }}
-              </p>
-            }
-          </fieldset>
-        }
-      </div>
-    }
 
     @if (errorMessage()) {
       <p class="notice error" role="alert">{{ errorMessage() }}</p>
     }
 
-    @if (sessionResult(currentExercise.id); as result) {
-      <section class="result-panel" aria-live="polite" aria-labelledby="result-title">
-        <h2 id="result-title">Resultado: {{ result.score }} de {{ result.maxScore }} pontos ({{ result.percentage }}%)</h2>
-        <p>{{ result.explanation }}</p>
-        <ol class="result-list">
-          @for (item of result.results; track item.itemType + item.itemKey) {
-            <li>
-              <strong>{{ item.itemType === 'blank' ? 'Lacuna' : 'Questão' }} {{ item.itemKey }}:</strong>
-              {{ item.isCorrect ? 'Correta' : 'Incorreta' }}.
-              Sua resposta: {{ item.submittedAnswer || 'sem resposta' }}.
-              Resposta esperada: {{ item.correctAnswer }}.
-              {{ item.explanation }}
-            </li>
+    <div class="exercise-list">
+      @for (currentExercise of exercises(); track trackExercise($index, currentExercise); let index = $index) {
+        <article class="exercise-card" [attr.aria-labelledby]="'exercise-title-' + currentExercise.id">
+          <header class="exercise-heading">
+            <p class="eyebrow">Exercício {{ index + 1 }} de {{ exercises().length }}</p>
+            <h2 [id]="'exercise-title-' + currentExercise.id">{{ currentExercise.title }}</h2>
+            <p>{{ currentExercise.instruction }}</p>
+          </header>
+
+          @if (currentExercise.exerciseType === 'fill_blank') {
+            <div class="exercise-text" aria-label="Texto do exercício">
+              @for (segment of segments(currentExercise); track $index) {
+                @if (segment.kind === 'text') {
+                  <span>{{ segment.value }}</span>
+                } @else {
+                  <span class="inline-answer">
+                    <label class="sr-only" [for]="'blank-' + currentExercise.id + '-' + segment.blank.key">
+                      Lacuna {{ segment.blank.key }}
+                    </label>
+                    @if (segment.blank.inputType === 'select') {
+                      <select
+                        [id]="'blank-' + currentExercise.id + '-' + segment.blank.key"
+                        [value]="answerForBlank(currentExercise.id, segment.blank.key)"
+                        [disabled]="!!resultFor(currentExercise.id, segment.blank.key, 'blank')"
+                        (change)="setBlankAnswer(currentExercise.id, segment.blank.key, $event)"
+                      >
+                        <option value="">Selecione</option>
+                        @for (option of segment.blank.options; track option.key) {
+                          <option [value]="option.text">{{ option.text }}</option>
+                        }
+                      </select>
+                    } @else {
+                      <input
+                        [id]="'blank-' + currentExercise.id + '-' + segment.blank.key"
+                        type="text"
+                        autocomplete="off"
+                        [value]="answerForBlank(currentExercise.id, segment.blank.key)"
+                        [disabled]="!!resultFor(currentExercise.id, segment.blank.key, 'blank')"
+                        (input)="setBlankAnswer(currentExercise.id, segment.blank.key, $event)"
+                      />
+                    }
+                    @if (resultFor(currentExercise.id, segment.blank.key, 'blank'); as result) {
+                      <span class="inline-result" [class.correct]="result.isCorrect">
+                        {{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta: {{ result.correctAnswer }}
+                      </span>
+                    }
+                  </span>
+                }
+              }
+            </div>
+          } @else {
+            <div class="exercise-text context">{{ currentExercise.contentTemplate }}</div>
+            <div class="question-list">
+              @for (question of currentExercise.questions; track trackQuestion($index, question)) {
+                <fieldset>
+                  <legend>{{ question.prompt }}</legend>
+                  <label class="sr-only" [for]="'question-' + currentExercise.id + '-' + question.key">
+                    Resposta para {{ question.prompt }}
+                  </label>
+                  <select
+                    [id]="'question-' + currentExercise.id + '-' + question.key"
+                    [value]="answerForQuestion(currentExercise.id, question.key)"
+                    [disabled]="!!resultFor(currentExercise.id, question.key, 'question')"
+                    (change)="setQuestionAnswer(currentExercise.id, question.key, $event)"
+                  >
+                    <option value="">Selecione uma resposta</option>
+                    @for (option of question.options; track option.key) {
+                      <option [value]="option.key">{{ optionLabel(option) }}</option>
+                    }
+                  </select>
+                  @if (resultFor(currentExercise.id, question.key, 'question'); as result) {
+                    <p class="inline-result" [class.correct]="result.isCorrect">
+                      {{ result.isCorrect ? 'Correta' : 'Incorreta' }} — resposta: {{ result.correctAnswer }}
+                    </p>
+                  }
+                </fieldset>
+              }
+            </div>
           }
-        </ol>
-      </section>
-    }
+
+          @if (sessionResult(currentExercise.id); as result) {
+            <section class="result-panel" aria-live="polite" [attr.aria-labelledby]="'result-title-' + currentExercise.id">
+              <h3 [id]="'result-title-' + currentExercise.id">
+                Resultado: {{ result.score }} de {{ result.maxScore }} pontos ({{ result.percentage }}%)
+              </h3>
+              <p>{{ result.explanation }}</p>
+              <ol class="result-list">
+                @for (item of result.results; track item.itemType + item.itemKey) {
+                  <li>
+                    <strong>{{ item.itemType === 'blank' ? 'Lacuna' : 'Questão' }} {{ item.itemKey }}:</strong>
+                    {{ item.isCorrect ? 'Correta' : 'Incorreta' }}.
+                    Sua resposta: {{ item.submittedAnswer || 'sem resposta' }}.
+                    Resposta esperada: {{ item.correctAnswer }}.
+                    {{ item.explanation }}
+                  </li>
+                }
+              </ol>
+            </section>
+          }
+        </article>
+      }
+    </div>
 
     <div class="actions">
-      <button type="button" class="secondary-button" [disabled]="exerciseIndex() === 0 || loading()" (click)="goToExercise(exerciseIndex() - 1)">
-        Exercício anterior
-      </button>
-      @if (sessionResult(currentExercise.id)) {
+      @if (allExercisesChecked()) {
         <button type="button" class="secondary-button" (click)="retry()">Tentar novamente</button>
       } @else {
         <button type="button" class="primary-button" [disabled]="submitting()" (click)="submit()">
           {{ submitting() ? 'Verificando…' : 'Verificar respostas' }}
         </button>
       }
-      <button type="button" class="secondary-button" [disabled]="exerciseIndex() + 1 >= exercises().length || loading()" (click)="goToExercise(exerciseIndex() + 1)">
-        Próximo exercício
-      </button>
     </div>
   }
 </section>

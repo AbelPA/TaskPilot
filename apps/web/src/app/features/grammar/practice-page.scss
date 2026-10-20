@@ -22,6 +22,36 @@ select:focus-visible {
   margin: 2rem 0;
 }
 
+.exercise-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.exercise-card {
+  padding: clamp(1rem, 4vw, 1.8rem);
+  border: 1px solid #cbd5e1;
+  border-radius: 1rem;
+  background: #f8fafc;
+}
+
+.exercise-heading {
+  margin-bottom: 1rem;
+}
+
+.exercise-heading .eyebrow {
+  margin: 0;
+}
+
+.exercise-heading h2 {
+  margin: 0.4rem 0;
+  font-size: 1.35rem;
+}
+
+.exercise-heading > p:last-child {
+  margin-bottom: 0;
+  color: #475569;
+}
+
 .eyebrow {
   color: #0f766e;
   font-size: 0.85rem;
@@ -112,6 +142,11 @@ legend {
 .result-panel h2 {
   margin-top: 0;
   font-size: 1.25rem;
+}
+
+.result-panel h3 {
+  margin-top: 0;
+  font-size: 1.15rem;
 }
 
 .result-list {

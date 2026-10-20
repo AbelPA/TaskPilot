@@ -35,14 +35,15 @@ Como estudante, quero praticar exercícios de lacunas ou de múltipla escolha vi
 
 **Cenários de aceitação**:
 
-1. **Dado** um tópico com exercícios ativos, **quando** o estudante escolhe praticar, **então** vê apenas exercícios relacionados ao tópico e pode resolver um por vez.
+1. **Dado** um tópico com exercícios ativos, **quando** o estudante escolhe praticar, **então** vê todos os exercícios relacionados ao tópico em uma lista na mesma página.
 2. **Dado** um exercício de lacunas com várias lacunas, **quando** o estudante responde, **então** cada campo aparece no seu marcador dentro do texto original, aceita digitação ou seleção conforme cadastrado e conserva pontuação e ordem próprias.
 3. **Dado** um exercício com vários parágrafos, **quando** ele é apresentado, **então** o texto, a pontuação e as quebras de parágrafo permanecem na ordem original.
 4. **Dado** respostas enviadas para um exercício de lacunas, **quando** a correção é solicitada, **então** cada lacuna é avaliada no servidor contra todas as respostas aceitas, respeitando a normalização configurada, e o resultado inclui resposta enviada, resposta esperada, acerto/erro e explicação aplicável.
 5. **Dado** uma questão de múltipla escolha, **quando** o estudante seleciona uma alternativa e solicita correção, **então** recebe a identificação da alternativa correta e a explicação geral ou específica da alternativa.
 6. **Dado** um exercício com várias questões relacionadas ao mesmo contexto, **quando** o estudante envia as respostas, **então** cada questão é corrigida individualmente e contribui para a pontuação.
-7. **Dado** um exercício já apresentado para resolução, **quando** o estudante consulta os dados antes de enviar respostas, **então** os dados não revelam respostas corretas nem critérios internos de correção.
-8. **Dado** um envio com lacuna/questão desconhecida, resposta duplicada ou referência pertencente a outro exercício, **quando** o servidor valida o envio, **então** rejeita a solicitação sem divulgar respostas de outro exercício.
+7. **Dado** vários exercícios exibidos na mesma página, **quando** o estudante solicita a correção, **então** recebe o resultado individual de cada exercício e de cada lacuna/questão respondida.
+8. **Dado** um exercício já apresentado para resolução, **quando** o estudante consulta os dados antes de enviar respostas, **então** os dados não revelam respostas corretas nem critérios internos de correção.
+9. **Dado** um envio com lacuna/questão desconhecida, resposta duplicada ou referência pertencente a outro exercício, **quando** o servidor valida o envio, **então** rejeita a solicitação sem divulgar respostas de outro exercício.
 
 ### História 3 — Navegar, retomar e repetir a prática (Prioridade: P2)
 
@@ -54,8 +55,8 @@ Como estudante, quero avançar, voltar, tentar novamente e retornar à teoria se
 
 **Cenários de aceitação**:
 
-1. **Dado** mais de um exercício disponível, **quando** o estudante navega para frente ou para trás, **então** vê a posição atual e preserva suas respostas já preenchidas na sessão.
-2. **Dado** um exercício respondido, **quando** o estudante escolhe tentar novamente, **então** os campos e o resultado de correção são limpos para uma nova tentativa.
+1. **Dado** mais de um exercício disponível na lista, **quando** o estudante preenche respostas, **então** cada exercício mantém suas respostas independentes durante a sessão.
+2. **Dado** os exercícios respondidos, **quando** o estudante escolhe tentar novamente, **então** os campos e resultados de correção são limpos para uma nova tentativa.
 3. **Dado** a tela de exercícios, **quando** o estudante escolhe voltar à teoria ou à lista de tópicos, **então** retorna ao destino correspondente.
 4. **Dado** o primeiro ou o último exercício, **quando** o estudante chega ao limite da sequência, **então** os controles de navegação indicam corretamente que não há exercício anterior ou seguinte.
 5. **Dado** um tópico sem exercícios ativos, **quando** o estudante tenta iniciar a prática, **então** recebe uma mensagem apropriada e pode voltar à teoria ou à lista.
@@ -89,7 +90,7 @@ Como estudante, quero avançar, voltar, tentar novamente e retornar à teoria se
 - **RF-014**: A normalização DEVE remover espaços externos e permitir configurar a sensibilidade a maiúsculas/minúsculas por exercício; contrações e outras variantes textuais DEVEM ser aceitas somente se cadastradas ou cobertas por regra explícita.
 - **RF-015**: Após a correção, a aplicação DEVE indicar cada resposta enviada, seu estado correto/incorreto, a resposta aceita/apresentada, a explicação pertinente e a pontuação obtida; o resultado não DEVE depender apenas de cor.
 - **RF-016**: A pontuação DEVE ser calculada individualmente por lacuna ou questão, somada no exercício e acompanhada de pontuação máxima e percentual; itens DEVEM ter pesos configuráveis e peso igual por padrão.
-- **RF-017**: A interface DEVE apresentar um exercício por vez, instruções, progresso, verificar respostas, anterior, próximo, tentar novamente, retorno à teoria e retorno à lista de tópicos.
+- **RF-017**: A interface DEVE apresentar em uma lista todos os exercícios ativos do tópico na mesma página, com instruções, verificar respostas de todos os exercícios, tentar novamente, retorno à teoria e retorno à lista de tópicos.
 - **RF-018**: As respostas preenchidas DEVEM permanecer durante a navegação entre exercícios na mesma sessão de estudo; histórico permanente e estatísticas por usuário não fazem parte desta entrega.
 - **RF-019**: A apresentação de tópicos, seções teóricas, exercícios e alternativas DEVE respeitar as respectivas ordens cadastradas.
 - **RF-020**: Conteúdo teórico formatado DEVE ser apresentado de forma segura, impedindo execução de HTML, scripts ou conteúdo ativo armazenado.

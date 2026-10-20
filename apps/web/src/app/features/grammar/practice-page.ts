@@ -1,13 +1,11 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { distinctUntilChanged, map } from 'rxjs';
+import { catchError, distinctUntilChanged, forkJoin, map, of, tap } from 'rxjs';
 import {
   GrammarApiService,
   GrammarBlank,
   GrammarExercise,
-  GrammarExerciseSummary,
   GrammarOption,
   GrammarQuestion,
 } from './grammar-api.service';
@@ -35,9 +33,7 @@ export class PracticePage implements OnInit {
   private readonly sessionStore = inject(GrammarSessionStore);
 
   protected readonly topicSlug = signal('');
-  protected readonly exercises = signal<GrammarExerciseSummary[]>([]);
-  protected readonly exercise = signal<GrammarExercise | null>(null);
-  protected readonly exerciseIndex = signal(0);
+  protected readonly exercises = signal<GrammarExercise[]>([]);
   protected readonly loading = signal(true);
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal('');
@@ -55,20 +51,19 @@ export class PracticePage implements OnInit {
       });
   }
 
-  protected segments(): PracticeSegment[] {
-    const current = this.exercise();
-    if (!current || current.exerciseType !== 'fill_blank') {
+  protected segments(exercise: GrammarExercise): PracticeSegment[] {
+    if (exercise.exerciseType !== 'fill_blank') {
       return [];
     }
 
-    const blanks = new Map(current.blanks.map(blank => [blank.key, blank]));
+    const blanks = new Map(exercise.blanks.map(blank => [blank.key, blank]));
     const segments: PracticeSegment[] = [];
     const marker = /\{\{blank:([^{}]+)\}\}/g;
     let cursor = 0;
-    for (const match of current.contentTemplate.matchAll(marker)) {
+    for (const match of exercise.contentTemplate.matchAll(marker)) {
       const index = match.index;
       if (index > cursor) {
-        segments.push({ kind: 'text', value: current.contentTemplate.slice(cursor, index) });
+        segments.push({ kind: 'text', value: exercise.contentTemplate.slice(cursor, index) });
       }
       const blank = blanks.get(match[1]);
       if (blank) {
@@ -78,91 +73,100 @@ export class PracticePage implements OnInit {
       }
       cursor = index + match[0].length;
     }
-    if (cursor < current.contentTemplate.length) {
-      segments.push({ kind: 'text', value: current.contentTemplate.slice(cursor) });
+    if (cursor < exercise.contentTemplate.length) {
+      segments.push({ kind: 'text', value: exercise.contentTemplate.slice(cursor) });
     }
     return segments;
   }
 
-  protected answerForBlank(key: string): string {
-    const id = this.exercise()?.id;
-    return id
-      ? this.sessionStore.get(id).submission.blankAnswers.find(answer => answer.blankKey === key)?.answer ?? ''
-      : '';
+  protected answerForBlank(exerciseId: string, key: string): string {
+    return this.sessionStore.get(exerciseId).submission.blankAnswers.find(
+      answer => answer.blankKey === key,
+    )?.answer ?? '';
   }
 
-  protected answerForQuestion(key: string): string {
-    const id = this.exercise()?.id;
-    return id
-      ? this.sessionStore.get(id).submission.questionAnswers.find(answer => answer.questionKey === key)?.optionKey ?? ''
-      : '';
+  protected answerForQuestion(exerciseId: string, key: string): string {
+    return this.sessionStore.get(exerciseId).submission.questionAnswers.find(
+      answer => answer.questionKey === key,
+    )?.optionKey ?? '';
   }
 
-  protected resultFor(key: string, type: 'blank' | 'question'): GrammarSessionItemResult | undefined {
-    const id = this.exercise()?.id;
-    return id
-      ? this.sessionStore.get(id).result?.results.find(result => result.itemKey === key && result.itemType === type)
-      : undefined;
+  protected resultFor(
+    exerciseId: string,
+    key: string,
+    type: 'blank' | 'question',
+  ): GrammarSessionItemResult | undefined {
+    return this.sessionStore.get(exerciseId).result?.results.find(
+      result => result.itemKey === key && result.itemType === type,
+    );
   }
 
   protected sessionResult(exerciseId: string): GrammarSessionResult | null {
     return this.sessionStore.get(exerciseId).result;
   }
 
-  protected setBlankAnswer(key: string, event: Event): void {
+  protected setBlankAnswer(exerciseId: string, key: string, event: Event): void {
     const input = event.target;
-    const id = this.exercise()?.id;
-    if (id && (input instanceof HTMLInputElement || input instanceof HTMLSelectElement)) {
-      this.sessionStore.setAnswer(id, key, input.value);
+    if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
+      this.sessionStore.setAnswer(exerciseId, key, input.value);
     }
   }
 
-  protected setQuestionAnswer(key: string, event: Event): void {
+  protected setQuestionAnswer(exerciseId: string, key: string, event: Event): void {
     const input = event.target;
-    const id = this.exercise()?.id;
-    if (id && input instanceof HTMLSelectElement) {
-      this.sessionStore.setQuestionAnswer(id, key, input.value);
+    if (input instanceof HTMLSelectElement) {
+      this.sessionStore.setQuestionAnswer(exerciseId, key, input.value);
     }
   }
 
   protected submit(): void {
-    const current = this.exercise();
-    if (!current || this.submitting() || this.sessionStore.get(current.id).result) {
+    if (this.submitting()) {
+      return;
+    }
+
+    const pendingExercises = this.exercises().filter(
+      exercise => !this.sessionStore.get(exercise.id).result,
+    );
+    if (pendingExercises.length === 0) {
       return;
     }
 
     this.submitting.set(true);
     this.errorMessage.set('');
-    this.api.submit(current.id, this.sessionStore.get(current.id).submission).subscribe({
-      next: result => {
-        this.sessionStore.setResult(current.id, result);
-        this.submitting.set(false);
-      },
-      error: (error: unknown) => {
-        this.errorMessage.set(
-          error instanceof HttpErrorResponse && error.status === 0
-            ? 'Não foi possível conectar ao serviço de exercícios. Suas respostas foram mantidas; tente novamente.'
-            : 'Não foi possível verificar as respostas. Elas foram mantidas; tente novamente.',
-        );
+    const failedExerciseIds: string[] = [];
+    forkJoin(
+      pendingExercises.map(exercise =>
+        this.api.submit(exercise.id, this.sessionStore.get(exercise.id).submission).pipe(
+          tap(result => this.sessionStore.setResult(exercise.id, result)),
+          catchError(() => {
+            failedExerciseIds.push(exercise.id);
+            return of(null);
+          }),
+        ),
+      ),
+    ).subscribe({
+      next: () => {
+        if (failedExerciseIds.length > 0) {
+          this.errorMessage.set(
+            failedExerciseIds.length === 1
+              ? 'Não foi possível verificar um exercício. As respostas foram mantidas; tente novamente.'
+              : `Não foi possível verificar ${failedExerciseIds.length} exercícios. As respostas foram mantidas; tente novamente.`,
+          );
+        }
         this.submitting.set(false);
       },
     });
   }
 
   protected retry(): void {
-    const id = this.exercise()?.id;
-    if (id) {
-      this.sessionStore.reset(id);
-      this.errorMessage.set('');
+    for (const exercise of this.exercises()) {
+      this.sessionStore.reset(exercise.id);
     }
+    this.errorMessage.set('');
   }
 
-  protected goToExercise(index: number): void {
-    if (index < 0 || index >= this.exercises().length || this.loading()) {
-      return;
-    }
-    this.exerciseIndex.set(index);
-    this.loadExercise(this.exercises()[index].id);
+  protected allExercisesChecked(): boolean {
+    return this.exercises().every(exercise => !!this.sessionStore.get(exercise.id).result);
   }
 
   protected optionLabel(option: GrammarOption): string {
@@ -173,9 +177,13 @@ export class PracticePage implements OnInit {
     return question.key;
   }
 
+  protected trackExercise(_: number, exercise: GrammarExercise): string {
+    return exercise.id;
+  }
+
   private loadExercises(slug: string): void {
     this.loading.set(true);
-    this.exercise.set(null);
+    this.exercises.set([]);
     this.errorMessage.set('');
     if (!slug) {
       this.errorMessage.set('O tópico solicitado não foi encontrado.');
@@ -185,33 +193,24 @@ export class PracticePage implements OnInit {
 
     this.api.getExercises(slug).subscribe({
       next: exercises => {
-        this.exercises.set(exercises);
         if (exercises.length === 0) {
           this.errorMessage.set('Ainda não há exercícios disponíveis para este tópico.');
           this.loading.set(false);
           return;
         }
-        this.exerciseIndex.set(0);
-        this.loadExercise(exercises[0].id);
+        forkJoin(exercises.map(exercise => this.api.getExercise(exercise.id))).subscribe({
+          next: loadedExercises => {
+            this.exercises.set(loadedExercises);
+            this.loading.set(false);
+          },
+          error: () => {
+            this.errorMessage.set('Não foi possível carregar os exercícios. Tente novamente.');
+            this.loading.set(false);
+          },
+        });
       },
       error: () => {
         this.errorMessage.set('Não foi possível carregar os exercícios. Tente novamente.');
-        this.loading.set(false);
-      },
-    });
-  }
-
-  private loadExercise(id: string): void {
-    this.loading.set(true);
-    this.exercise.set(null);
-    this.errorMessage.set('');
-    this.api.getExercise(id).subscribe({
-      next: exercise => {
-        this.exercise.set(exercise);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.errorMessage.set('Não foi possível carregar este exercício. Tente novamente.');
         this.loading.set(false);
       },
     });
