@@ -4,6 +4,14 @@ import Tracker from '@openreplay/tracker';
 let openReplayTracker: Tracker | null = null;
 let openReplayZone: NgZone | null = null;
 
+const sanitizeSensitivePathSegments = (url: string): string =>
+  url
+    .replace(
+      /(\/api\/audio-extractions\/)(?!notification-streams(?:\/|$))[^/?#]+/gi,
+      '$1[redacted]',
+    )
+    .replace(/(\/notification-streams\/)[^/?#]+/gi, '$1[redacted]');
+
 declare global {
   interface Window {
     TASKPILOT_CONFIG?: {
@@ -17,14 +25,6 @@ export function initializeOpenReplay(): void {
 
   const projectKey = window.TASKPILOT_CONFIG?.openReplayProjectKey;
   if (!projectKey) return;
-
-  const sanitizeSensitivePathSegments = (url: string): string =>
-    url
-      .replace(
-        /(\/api\/audio-extractions\/)(?!notification-streams(?:\/|$))[^/?#]+/gi,
-        '$1[redacted]',
-      )
-      .replace(/(\/notification-streams\/)[^/?#]+/gi, '$1[redacted]');
 
   openReplayZone = inject(NgZone);
   openReplayZone.runOutsideAngular(() => {
