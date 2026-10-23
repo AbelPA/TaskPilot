@@ -90,6 +90,14 @@ figcaption {
   color: #475569;
 }
 
+.example + p {
+  margin-top: 2.5rem;
+}
+
+.note + p {
+  margin-top: 2.5rem;
+}
+
 .topic-navigation {
   display: flex;
   flex-wrap: wrap;

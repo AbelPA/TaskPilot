@@ -31,12 +31,12 @@ export class TheoryPage implements OnInit {
         next: topic => {
           this.topic.set(topic);
           this.loading.set(false);
-          this.errorMessage.set(topic ? '' : 'O tópico solicitado não foi encontrado.');
+          this.errorMessage.set(topic ? '' : 'The requested topic could not be found.');
         },
         error: () => {
           this.topic.set(null);
           this.loading.set(false);
-          this.errorMessage.set('Não foi possível carregar a teoria. Tente novamente.');
+          this.errorMessage.set("We couldn't load the theory. Please try again.");
         },
       });
   }

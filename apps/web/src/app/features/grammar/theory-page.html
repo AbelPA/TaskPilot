@@ -1,8 +1,8 @@
 <section class="page" aria-labelledby="topic-title">
-  <a class="back-link" routerLink="/grammar">← Todos os tópicos</a>
+  <a class="back-link" routerLink="/grammar">← All topics</a>
 
   @if (loading()) {
-    <p role="status">Carregando teoria…</p>
+    <p role="status">Loading theory…</p>
   } @else if (errorMessage()) {
     <p class="notice error" role="alert">{{ errorMessage() }}</p>
   } @else if (topic(); as currentTopic) {
@@ -13,7 +13,7 @@
     </header>
 
     @if (currentTopic.theorySections.length === 0) {
-      <p class="notice">Ainda não há teoria cadastrada para este tópico.</p>
+      <p class="notice">There is no theory available for this topic yet.</p>
     } @else {
       @for (section of currentTopic.theorySections; track section.displayOrder) {
         <article class="theory-section">
@@ -57,17 +57,17 @@
 
     <footer class="topic-navigation">
       @if (currentTopic.previousTopicSlug) {
-        <a class="secondary-button" [routerLink]="['/grammar', currentTopic.previousTopicSlug]">Tópico anterior</a>
+        <a class="secondary-button" [routerLink]="['/grammar', currentTopic.previousTopicSlug]">Previous topic</a>
       }
       @if (currentTopic.exerciseCount > 0) {
         <a class="primary-button" [routerLink]="['/grammar', currentTopic.slug, 'practice']">
-          Praticar exercícios
+          Practise exercises
         </a>
       } @else {
-        <p role="status">Ainda não há exercícios disponíveis para este tópico.</p>
+        <p role="status">There are no exercises available for this topic yet.</p>
       }
       @if (currentTopic.nextTopicSlug) {
-        <a class="secondary-button" [routerLink]="['/grammar', currentTopic.nextTopicSlug]">Próximo tópico</a>
+        <a class="secondary-button" [routerLink]="['/grammar', currentTopic.nextTopicSlug]">Next topic</a>
       }
     </footer>
   }

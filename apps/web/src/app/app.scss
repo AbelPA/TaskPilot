@@ -19,6 +19,7 @@
 nav {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.25rem;
 }
 
@@ -26,6 +27,53 @@ nav {
 nav a {
   color: #0f172a;
   text-decoration: none;
+}
+
+.nav-menu {
+  position: relative;
+}
+
+.nav-menu summary {
+  display: inline-block;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  color: #0f172a;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.nav-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-menu summary::after {
+  margin-left: 0.4rem;
+  content: '▾';
+}
+
+.nav-menu[open] summary,
+.nav-menu:has(a.active) summary,
+.nav-menu summary:hover,
+.nav-menu summary:focus-visible {
+  background: #ccfbf1;
+  color: #115e59;
+}
+
+.nav-menu-items {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  display: grid;
+  min-width: 12rem;
+  gap: 0.15rem;
+  padding: 0.35rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: white;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 12%);
 }
 
 .brand {

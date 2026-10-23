@@ -2,9 +2,14 @@
   <a class="brand" routerLink="/extract-audio" aria-label="TaskPilot início">TaskPilot</a>
   <nav aria-label="Navegação principal">
     <a routerLink="/extract-audio" routerLinkActive="active">Extrair áudio</a>
-    <a routerLink="/grammar" routerLinkActive="active">Estudar gramática</a>
-    <a routerLink="/grammar/statistics" routerLinkActive="active">Estatísticas</a>
-    <a routerLink="/grammar/review" routerLinkActive="active">Revisão</a>
+    <details class="nav-menu">
+      <summary>English Study</summary>
+      <div class="nav-menu-items">
+        <a routerLink="/grammar" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Estudar gramática</a>
+        <a routerLink="/grammar/statistics" routerLinkActive="active">Estatísticas</a>
+        <a routerLink="/grammar/review" routerLinkActive="active">Revisão</a>
+      </div>
+    </details>
     <a routerLink="/settings" routerLinkActive="active">Configurações</a>
   </nav>
   <app-audio-extraction-notification-center />
