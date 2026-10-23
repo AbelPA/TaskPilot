@@ -26,4 +26,9 @@
     <InternalsVisibleTo Include="AudioApi.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Grammar/Persistence/SeedData/a1-a2-grammar.json"
+                      LogicalName="Api.Grammar.Persistence.SeedData.a1-a2-grammar.json" />
+  </ItemGroup>
+
 </Project>

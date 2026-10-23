@@ -58,6 +58,7 @@ if (app.Configuration.GetValue($"{GrammarOptions.SectionName}:{nameof(GrammarOpt
     await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<GrammarDbContext>();
     await dbContext.Database.MigrateAsync();
+    await GrammarSeedData.SeedAsync(dbContext, CancellationToken.None);
 }
 
 if (app.Configuration.GetValue($"{SettingsOptions.SectionName}:{nameof(SettingsOptions.ApplyMigrationsOnStartup)}", true))
